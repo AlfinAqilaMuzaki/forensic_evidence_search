@@ -26,6 +26,57 @@ diganti namanya.
 
 ---
 
+## ⬇️ Download & Instal — langsung pakai, tanpa Python
+
+Untuk pengguna yang **hanya ingin memakai aplikasinya**. Tidak perlu menginstal Python,
+library, model AI, atau FFmpeg, karena semuanya sudah ada di dalam installer.
+
+**1. Download** dari halaman Releases:
+**<https://github.com/AlfinAqilaMuzaki/forensic_evidence_search/releases/latest>**
+
+Di bagian **Assets**, unduh **SEMUA** file installer, lalu simpan **di folder yang sama**:
+
+| File | Keterangan |
+|---|---|
+| `CyberForensicEvidenceSearch-Setup-v2.1.0.exe` | Installer (jalankan file ini) |
+| `CyberForensicEvidenceSearch-Setup-v2.1.0-1.bin` | Data installer berisi library & model AI (± 1,6 GB). Wajib diunduh |
+
+> Installer dipecah menjadi `Setup.exe` + file `.bin` karena GitHub membatasi ukuran
+> per file maksimal 2 GB. Pengguna tetap cukup menjalankan `Setup.exe`, asalkan file
+> `.bin` berada di folder yang sama. Total unduhan ± 1,6 GB.
+
+**2. Instal**
+1. Double-click `CyberForensicEvidenceSearch-Setup-v2.1.0.exe`.
+2. Jika muncul layar biru **"Windows protected your PC"** (SmartScreen), klik
+   **More info** lalu **Run anyway**. Peringatan ini muncul karena installer belum
+   memiliki sertifikat tanda tangan digital berbayar, bukan karena berbahaya.
+   Sumber resmi installer hanya repository di atas.
+3. Klik **Lanjut**. Di halaman lokasi instalasi, Anda boleh memilih drive lain yang
+   ruangnya lebih lega (contoh `D:\Cyber Forensic Evidence Search`).
+4. Pastikan **Buat ikon di Desktop** tercentang, lalu klik **Lanjut**, **Pasang**, dan **Selesai**.
+   Instalasi tidak memerlukan hak administrator.
+
+**3. Pakai**
+Buka aplikasi lewat ikon **Cyber Forensic Evidence Search** di **Desktop** atau di
+**menu Start**. Selanjutnya ikuti [Cara menggunakan](#8-cara-menggunakan).
+
+| Kebutuhan | Keterangan |
+|---|---|
+| Sistem operasi | Windows 10 / 11 64-bit |
+| Ruang disk | ± 3 GB untuk aplikasi, ditambah ruang untuk data hasil analisis |
+| RAM | Minimal 8 GB (disarankan 16 GB) |
+| Internet | **Tidak perlu**, aplikasi berjalan 100% offline |
+| Laporan PDF | Memakai Microsoft Edge (sudah ada di Windows 10/11) |
+
+**Uninstall:** *Settings → Apps → Installed apps → Cyber Forensic Evidence Search → Uninstall*.
+Folder `DATA_ANALISIS` (hasil analisis dan paket bukti) **tidak** ikut terhapus, supaya
+tidak ada bukti yang hilang. Hapus folder itu secara manual bila sudah tidak diperlukan.
+
+> Ingin menjalankan dari source code atau ikut mengembangkan? Lihat
+> [Instalasi dari GitHub](#7-instalasi-dari-github-langkah-demi-langkah).
+
+---
+
 ## Daftar Isi
 
 1. [Latar belakang & masalah yang diselesaikan](#1-latar-belakang--masalah-yang-diselesaikan)
@@ -39,7 +90,7 @@ diganti namanya.
 9. [Cara melihat & membaca hasil](#9-cara-melihat--membaca-hasil)
 10. [Kinerja & skala (hasil pengukuran)](#10-kinerja--skala-hasil-pengukuran)
 11. [Tema tampilan](#11-tema-tampilan)
-12. [Membuat versi EXE portable](#12-membuat-versi-exe-portable)
+12. [Membuat versi EXE & installer (untuk developer)](#12-membuat-versi-exe--installer-untuk-developer)
 13. [Pengujian](#13-pengujian)
 14. [Struktur project](#14-struktur-project)
 15. [Pemecahan masalah (FAQ)](#15-pemecahan-masalah-faq)
@@ -273,7 +324,7 @@ python main.py
 atau **double-click `jalankan.bat`** (tanpa venv), atau buat shortcut berisi
 `.venv\Scripts\pythonw.exe main.py` (dengan venv, tanpa jendela konsol).
 
-Cek cepat tanpa membuka tampilan (memastikan model foto mirip bisa dimuat offline):
+Cek cepat tanpa membuka tampilan (memeriksa folder data, FFmpeg, browser PDF, CLIP, EasyOCR, dan Whisper; semua harus `[OK]`):
 ```powershell
 python main.py --selftest
 ```
@@ -564,26 +615,44 @@ persegi, minimal 128×128 px) di folder aplikasi, lalu jalankan ulang aplikasi.
 
 ---
 
-## 12. Membuat versi EXE portable
+## 12. Membuat versi EXE & installer (untuk developer)
 
-Build EXE membungkus aplikasi + Python + semua library + model + FFmpeg menjadi satu
-folder yang bisa **di-copy ke komputer lain dan langsung dijalankan** (double-click
-`ForensicEvidenceSearch.exe`) **tanpa install Python dan tanpa internet**.
-Cocok untuk dibagikan ke anggota tim atau dipakai di komputer lab yang terisolasi.
+Bagian ini untuk **pengembang** yang ingin membuat ulang installer. Pengguna biasa cukup
+mengunduh installer jadi (lihat [Download & Instal](#️-download--instal--langsung-pakai-tanpa-python)).
 
-Langkah (di komputer yang sudah selesai Langkah 1–7 di atas):
+Di komputer yang sudah menyelesaikan Langkah 1–7:
+
+**1. Build EXE**
 ```powershell
 build_exe.bat
 ```
-- Proses 10–30 menit, hasil di `dist\ForensicEvidenceSearch\` (± 3–4 GB).
-- Tunggu sampai muncul `=== SELESAI ===`. Pesan *WARNING* tentang `pytest`, `dask`,
-  `tensorboard`, dan *DeprecationWarning* torch adalah normal.
-- Build memakai virtual environment terpisah (`.venv_build`), sehingga environment
-  Python utama tidak berubah.
-- Bagikan **seluruh folder** `dist\ForensicEvidenceSearch\` (zip/flashdisk/harddisk).
-- Untuk menghapus sisa build: hapus folder `build\`, `dist\`, `.venv_build\`, dan file `*.spec`.
+- Membungkus aplikasi, Python, semua library, model AI, FFmpeg, dan ikon menjadi folder
+  `dist\ForensicEvidenceSearch\` (± 3–4 GB). Proses 10–40 menit.
+- Build memakai virtual environment terpisah (`.venv_build`), dan file sementaranya
+  disimpan di folder project (`_tmp_build`), bukan di drive C.
+- Di akhir proses, `ForensicEvidenceSearch.exe --selftest` dijalankan otomatis. Self-test
+  memeriksa folder data, FFmpeg, browser PDF, CLIP, EasyOCR, dan Whisper. Semua baris
+  harus `[OK]` dan diakhiri `SELFTEST PASSED`.
+- Pesan *WARNING* tentang `pytest`, `dask`, `tensorboard`, dan *DeprecationWarning* torch normal.
 
-Build EXE **tidak wajib** bila aplikasi hanya dipakai di komputer yang sudah terinstal (Langkah 8).
+**2. Buat installer `Setup.exe`**
+```powershell
+winget install JRSoftware.InnoSetup     # sekali saja
+build_installer.bat
+```
+- Hasil di `installer_output\`: `CyberForensicEvidenceSearch-Setup-v2.1.0.exe` (± 4 MB)
+  dan file `.bin` (± 1,6 GB; dipecah otomatis bila > 2 GB).
+- Installer berbahasa Indonesia, bisa dipasang tanpa hak administrator, membuat ikon
+  Desktop dan menu Start, dan terdaftar di *Settings → Apps* untuk uninstall.
+- Konfigurasi installer ada di `installer\ForensicEvidenceSearch.iss`.
+
+**3. Rilis di GitHub**: upload **semua** file di `installer_output\` ke satu GitHub Release.
+```powershell
+gh release create v2.1.0 installer_output\* --title "Cyber Forensic Evidence Search v2.1.0"
+```
+
+Folder `dist\ForensicEvidenceSearch\` juga bisa langsung di-copy ke komputer lain dan
+dijalankan dengan double-click `ForensicEvidenceSearch.exe` (versi portable tanpa installer).
 
 ---
 
@@ -595,7 +664,7 @@ Build EXE **tidak wajib** bila aplikasi hanya dipakai di komputer yang sudah ter
 | `python tests\validate_forensic.py <bukti> <hasil> [base\|small]` | Ekstraksi end-to-end, ketiga mode pencarian, deteksi false positive, pengamanan bukti, verifikasi hash, dan **memastikan folder bukti tidak berubah** |
 | `python tests\scale_test.py <folder> 3000 500000` | Uji skala: ribuan file nyata + ratusan ribu segmen teks |
 | `python tests\validate.py` | Validasi modul foto mirip (8 varian near-duplicate vs 40 distractor) |
-| `python main.py --selftest` | Model CLIP dapat dimuat offline |
+| `python main.py --selftest` | Semua mesin siap offline: folder data, FFmpeg, browser PDF, CLIP, EasyOCR, Whisper |
 
 Hasil validasi terakhir: **9/9 file target ditemukan, 0 false positive, folder bukti
 tidak berubah, verifikasi hash 14/14 cocok, rantai audit utuh → `HASIL: LULUS`.**
@@ -608,7 +677,10 @@ tidak berubah, verifikasi hash 14/14 cocok, rantai audit utuh → `HASIL: LULUS`
 forensic_evidence_search/
 ├── main.py                     entry point (GUI) + --selftest
 ├── jalankan.bat                menjalankan aplikasi dari source
-├── build_exe.bat               build EXE portable
+├── build_exe.bat               build EXE (dist\ForensicEvidenceSearch\) + self-test otomatis
+├── build_installer.bat         membuat installer Setup.exe (Inno Setup)
+├── installer/                  skrip installer (ForensicEvidenceSearch.iss)
+├── assets/                     ikon aplikasi (app.ico)
 ├── hapus_semua_data.bat        menghapus seluruh DATA_ANALISIS
 ├── requirements.txt
 ├── dokumentasi/                screenshot dokumentasi README

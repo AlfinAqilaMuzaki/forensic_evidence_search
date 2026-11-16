@@ -18,7 +18,29 @@ def app_dir() -> Path:
     return Path(__file__).resolve().parent.parent
 
 
-DATA_ROOT = app_dir() / "DATA_ANALISIS"
+def _writable(d: Path) -> bool:
+    try:
+        d.mkdir(parents=True, exist_ok=True)
+        probe = d / ".tulis_test"
+        probe.write_text("ok", encoding="utf-8")
+        probe.unlink()
+        return True
+    except OSError:
+        return False
+
+
+def _data_root() -> Path:
+    """DATA_ANALISIS di samping aplikasi; bila folder aplikasi tidak bisa ditulis
+    (mis. terinstal di Program Files), pakai Documents pengguna."""
+    primary = app_dir() / "DATA_ANALISIS"
+    if _writable(primary):
+        return primary
+    fallback = Path.home() / "Documents" / "CyberForensicEvidenceSearch" / "DATA_ANALISIS"
+    fallback.mkdir(parents=True, exist_ok=True)
+    return fallback
+
+
+DATA_ROOT = _data_root()
 
 
 def workspace_for(evidence_dir: str | Path) -> Path:

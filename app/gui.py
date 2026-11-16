@@ -40,7 +40,10 @@ class MainWindow(QMainWindow):
         self.setMinimumSize(1180, 760)
         self.state = AppState()
         logo = app_dir() / "logo.png"
-        self.setWindowIcon(theme.glyph_icon("shield", "#00d4ff", 32))
+        from .forensic.fconfig import BASE_DIR
+
+        ico = BASE_DIR / "assets" / "app.ico"
+        self.setWindowIcon(QIcon(str(ico)) if ico.exists() else theme.glyph_icon("shield", "#00d4ff", 32))
         self._build(str(logo) if logo.exists() else None)
         self.apply_theme(theme.current())
         last = self.state.last_evidence()
