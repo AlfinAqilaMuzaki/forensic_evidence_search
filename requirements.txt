@@ -1,0 +1,17 @@
+numpy
+pillow
+opencv-python-headless
+torch
+torchvision
+open_clip_torch
+faiss-cpu
+imagehash
+PySide6
+# --- modul forensik teks ---
+easyocr
+faster-whisper
+rapidfuzz
+pymupdf
+python-docx
+python-pptx
+openpyxl

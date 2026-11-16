@@ -1,0 +1,42 @@
+# Build artifacts (dihasilkan ulang oleh build_exe.bat, jangan di-commit)
+.venv_build/
+build/
+dist/
+*.spec
+
+# Bobot model (besar, >100 MB/file) - unduh via: python scripts/download_model.py
+models/
+
+# Data hasil analisis (berisi data bukti/kasus - JANGAN PERNAH di-commit)
+DATA_ANALISIS/
+_index_foto/
+_tmp/
+bin/
+logo.png
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Data uji sintetis & index hasil tests/validate.py
+tests/_dataset/
+tests/_index/
+tests/_forensic_dataset/
+
+# Index aplikasi kalau sampai ke-generate di dalam repo (seharusnya di AppData)
+*.hnsw
+catalog.db
+catalog.db-wal
+catalog.db-shm
+
+# Log & arsip
+*.zip
+build_log*.txt
+*.log
+
+# Editor / OS
+.vscode/
+.idea/
+Thumbs.db
+.DS_Store
