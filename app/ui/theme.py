@@ -1,4 +1,4 @@
-"""Tema tampilan: SIBER BIRU (gelap) dan EMAS ORANYE (terang), gaya cyberpunk."""
+"""Tema tampilan: DARK dan LIGHT, gaya cyberpunk."""
 from __future__ import annotations
 
 from PySide6.QtCore import QSettings, Qt
@@ -6,7 +6,7 @@ from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPixmap
 
 THEMES: dict[str, dict[str, str]] = {
     "dark": {
-        "name": "SIBER BIRU",
+        "name": "DARK",
         "bg": "#050a14", "bg2": "#0a1424", "bg3": "#0e1c33", "bg4": "#13284a",
         "border": "#17406e", "border2": "#0f2a4a",
         "accent": "#00d4ff", "accent2": "#2f7bff", "accent3": "#7a5cff",
@@ -19,7 +19,7 @@ THEMES: dict[str, dict[str, str]] = {
         "stripe": "#d4a017",
     },
     "light": {
-        "name": "EMAS ORANYE",
+        "name": "LIGHT",
         "bg": "#f4ecdc", "bg2": "#fffaf0", "bg3": "#ffffff", "bg4": "#fbefd6",
         "border": "#d8b35a", "border2": "#ead6a6",
         "accent": "#e06a00", "accent2": "#b8860b", "accent3": "#8b4a00",
@@ -119,6 +119,8 @@ QLabel#ChipWarn {{ font-family: "{HEAD_FONT}"; font-size: 8.5pt; letter-spacing:
                   border-radius: 2px; border: 1px solid {c['warn']}; color: {c['warn']}; }}
 QLabel#HeaderChip {{ font-family: "{HEAD_FONT}"; font-size: 8.5pt; letter-spacing: 1px; padding: 4px 10px;
     color: #ffffff; background: rgba(0,0,0,110); border: 1px solid {c['stripe']}; border-radius: 2px; }}
+QFrame#Credit {{ background: {c['bg3']}; border: 1px solid {c['border2']}; border-left: 3px solid {c['stripe'] if dark else c['accent']}; }}
+QLabel#CreditName {{ font-family: "{HEAD_FONT}"; font-size: 10.5pt; font-weight: 700; color: {c['title']}; letter-spacing: 1px; }}
 QLabel#PathLabel {{ font-family: "{MONO_FONT}"; font-size: 9pt; color: {c['muted']}; }}
 
 /* ---------- sidebar ---------- */

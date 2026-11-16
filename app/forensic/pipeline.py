@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Optional
 
-from . import fconfig
+from . import AUTHOR, REPO_URL, TOOL_NAME, TOOL_VERSION, fconfig
 from .extractors import (
     Engines, StopRequested, extract_document, extract_image, extract_video_frames,
     fmt_ts, hash_file, kind_from_ext, probe_media, sniff_kind, transcribe,
@@ -257,6 +257,7 @@ class CaseProcessor:
             f"SHA-256     : {sha}",
             f"MD5         : {md5}",
             f"Diekstrak   : {now_text()}",
+            f"Alat        : {TOOL_NAME} v{TOOL_VERSION} - dibuat oleh {AUTHOR} ({REPO_URL})",
             f"Jumlah segmen teks: {len(segs)}",
             "=" * 60, "",
         ]

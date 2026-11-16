@@ -7,6 +7,7 @@ FOTO MIRIP (secure_photo_results).
 """
 from __future__ import annotations
 
+import base64
 import csv
 import hashlib
 import html
@@ -14,11 +15,12 @@ import os
 import re
 import shutil
 import stat
+import subprocess
 import time
 from pathlib import Path
 from typing import Callable, Optional
 
-from . import TOOL_NAME, TOOL_VERSION, fconfig
+from . import AUTHOR, REPO_URL, TOOL_NAME, TOOL_VERSION, fconfig
 from .extractors import fmt_ts, hash_file
 from .search import Hit
 from .store import CaseStore, now_text, operator_name
@@ -35,13 +37,22 @@ body{font-family:Segoe UI,Arial,sans-serif;margin:0;color:#111;background:#fff}
 h2{font-size:15px;margin-top:26px;border-bottom:2px solid #d4a017;padding-bottom:4px;letter-spacing:1px}
 table{border-collapse:collapse;width:100%;font-size:12.5px}
 th,td{border:1px solid #bbb;padding:6px;vertical-align:top;text-align:left}
-th{background:#0b2f66;color:#fff} tr:nth-child(even) td{background:#f6f8fb}
+th{background:#0b2f66;color:#fff} tr:nth-child(even) td{background:rgba(240,244,250,.65)}
 mark{background:#ffd54a;padding:0 2px;font-weight:600}
 .mono{font-family:Consolas,monospace;font-size:11px;word-break:break-all}
 .meta td{border:none;padding:3px 12px 3px 0;background:none!important}
 img{max-width:240px;border:1px solid #999}
 .ok{color:#0a7a2f;font-weight:700} .bad{color:#b00020;font-weight:700}
 .note{font-size:12px;color:#555;border-left:4px solid #d4a017;padding:8px 12px;background:#fffaf0}
+.wm-logo{position:fixed;top:50%;left:50%;width:460px;height:460px;transform:translate(-50%,-50%);
+  opacity:.07;z-index:49;pointer-events:none}
+.foot{display:flex;justify-content:space-between;gap:20px;margin-top:22px;padding-top:10px;
+  border-top:2px solid #d4a017;font-size:11px;color:#333}
+.foot .r{text-align:right}
+@page{size:A4;margin:12mm 10mm 18mm 10mm}
+@media print{*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body{font-size:11px} table{font-size:10.5px} img{max-width:150px} .wrap{padding:10px 4px}
+  tr{page-break-inside:avoid}}
 """
 
 
@@ -98,7 +109,9 @@ def _meta_rows(info: dict, extra: list[tuple[str, str]]) -> str:
             ("Komputer", info.get("host", "")),
             *extra,
             ("Waktu laporan", now_text()),
-            ("Alat", f"{TOOL_NAME} v{TOOL_VERSION}")]
+            ("Alat", f"{TOOL_NAME} v{TOOL_VERSION}"),
+            ("Pembuat alat", AUTHOR),
+            ("*Sumber resmi", f"<a href='{REPO_URL}'>{html.escape(REPO_URL)}</a>")]
     # kunci berawalan '*' = nilai sudah berupa HTML aman
     return "".join(f"<tr><td>{e(k.lstrip('*'))}</td><td>: {v if k.startswith('*') else e(v)}</td></tr>"
                    for k, v in rows)
@@ -188,9 +201,10 @@ def secure_hits(store: CaseStore, hits: list[Hit], query: str, mode: str, copy_f
                 [("*Kalimat dicari", f"<b>\"{e(query)}\"</b> ({e(mode_txt.get(mode, mode))})"),
                  ("Jumlah temuan", f"{len(rows)} lokasi di {len(copied)} file")],
                 "".join(body), list(copied.values()))
+    pdf = write_pdf(out, log)
     _write_package_hashes(out)
     store.audit("AMANKAN_BUKTI_TEKS", f"pencarian=\"{query}\" mode={mode} temuan={len(hits)} "
-                                      f"file={len(copied)} folder={out}")
+                                      f"file={len(copied)} folder={out} pdf={'ya' if pdf else 'tidak'}")
     progress(len(file_ids), len(file_ids), "selesai")
     log(f"Bukti diamankan di: {out}")
     return out
@@ -261,8 +275,9 @@ def secure_photo_results(store: CaseStore, results: list, query_path: str,
                 note="Skor kemiripan hanya untuk mengurutkan kandidat, BUKAN bukti dua foto identik. "
                      "Skor pHash/ORB tinggi menandakan near-duplicate (foto sama yang diubah/di-crop); "
                      "CLIP tinggi saja menandakan kemiripan isi/scene.")
+    pdf = write_pdf(out, log)
     _write_package_hashes(out)
-    store.audit("AMANKAN_BUKTI_FOTO", f"referensi={query_path} sha256={q_sha} hasil={len(entries)} folder={out}")
+    store.audit("AMANKAN_BUKTI_FOTO", f"referensi={query_path} sha256={q_sha} hasil={len(entries)} folder={out} pdf={'ya' if pdf else 'tidak'}")
     progress(len(results), len(results), "selesai")
     log(f"Bukti diamankan di: {out}")
     return out
@@ -273,11 +288,46 @@ def _write_manifest(out: Path, info: dict, title: str, items) -> None:
     with open(out / "manifest_hash.txt", "w", encoding="utf-8") as fh:
         fh.write(f"MANIFEST BUKTI DIGITAL - {now_text()}\n")
         fh.write(f"Operator: {info.get('operator') or operator_name()} | Folder bukti: {info.get('evidence_dir', '')}\n")
+        fh.write(f"Alat: {TOOL_NAME} v{TOOL_VERSION} - dibuat oleh {AUTHOR} ({REPO_URL})\n")
         fh.write(f"{title}\n\n")
         for no, path, size, sha, md5, copy, copy_sha, ok in items:
             fh.write(f"[{no:03d}] {path}\n      ukuran={size} SHA-256={sha} MD5={md5}\n")
             if copy:
                 fh.write(f"      salinan={copy.name} SHA-256 salinan={copy_sha} COCOK={'YA' if ok else 'TIDAK'}\n")
+
+
+def _logo_data_uri() -> str:
+    """Logo watermark: `logo.png` di folder aplikasi bila ada, selain itu lambang perisai bawaan."""
+    try:
+        from ..workspace import app_dir
+
+        lp = app_dir() / "logo.png"
+        if lp.exists():
+            return "data:image/png;base64," + base64.b64encode(lp.read_bytes()).decode()
+    except Exception:  # noqa: BLE001
+        pass
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'>"
+        "<polygon points='100,6 181,53 181,147 100,194 19,147 19,53' fill='#0b2f66' stroke='#d4a017' stroke-width='8'/>"
+        "<polygon points='100,30 160,65 160,135 100,170 40,135 40,65' fill='none' stroke='#00b4e0' stroke-width='4'/>"
+        "<circle cx='92' cy='92' r='30' fill='none' stroke='#ffffff' stroke-width='10'/>"
+        "<line x1='114' y1='114' x2='142' y2='142' stroke='#ffffff' stroke-width='12' stroke-linecap='round'/>"
+        "<line x1='76' y1='92' x2='108' y2='92' stroke='#d4a017' stroke-width='6'/></svg>"
+    )
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
+
+
+def _tile_data_uri(line1: str, line2: str) -> str:
+    """Pola teks transparan miring berulang (watermark teks)."""
+    e = html.escape
+    svg = (
+        "<svg xmlns='http://www.w3.org/2000/svg' width='600' height='340'>"
+        "<g transform='rotate(-28 300 170)' font-family='Consolas, monospace' fill='#0b2f66' fill-opacity='0.10' "
+        "text-anchor='middle'>"
+        f"<text x='300' y='165' font-size='14' font-weight='bold' letter-spacing='2'>{e(line1)}</text>"
+        f"<text x='300' y='185' font-size='10.5' letter-spacing='1'>{e(line2)}</text></g></svg>"
+    )
+    return "data:image/svg+xml;base64," + base64.b64encode(svg.encode("utf-8")).decode()
 
 
 def _write_html(out: Path, title: str, info: dict, extra_meta, body: str, copied: list,
@@ -295,12 +345,103 @@ def _write_html(out: Path, title: str, info: dict, extra_meta, body: str, copied
     integ.append("</table>")
     default_note = ("Teks hasil OCR/transkripsi otomatis dapat mengandung kesalahan pengenalan; setiap temuan "
                     "wajib diverifikasi dengan membuka/memutar file aslinya pada lokasi yang tercantum. ")
+    # Kode verifikasi = SHA-256 dari manifest_hash.txt (daftar hash semua file bukti dalam paket)
+    man = out / "manifest_hash.txt"
+    verif = hashlib.sha256(man.read_bytes()).hexdigest() if man.exists() else "-"
+    stamp = time.strftime("%d-%m-%Y %H:%M")
+    tile = _tile_data_uri(f"{TOOL_NAME.upper()} • BUKTI DIGITAL",
+                          f"{stamp} • {info.get('operator') or operator_name()} • {AUTHOR}")
     doc = f"""<!doctype html><html lang="id"><head><meta charset="utf-8"><title>{e(title)}</title>
-<style>{_CSS}</style></head><body>
-<div class="top"><h1>{e(title)}</h1><div>{e(TOOL_NAME.upper())} &middot; BUKTI DIGITAL</div></div>
+<meta name="author" content="{e(AUTHOR)}"><meta name="generator" content="{e(TOOL_NAME)} v{TOOL_VERSION}">
+<style>{_CSS}
+.wm-tile{{position:fixed;inset:0;background-image:url("{tile}");background-repeat:repeat;z-index:50;pointer-events:none}}
+</style></head><body>
+<div class="wm-tile"></div>
+<img class="wm-logo" src="{_logo_data_uri()}" alt="">
+<div class="top"><h1>{e(title)}</h1>
+<div>{e(TOOL_NAME.upper())} v{TOOL_VERSION} &middot; BUKTI DIGITAL &middot; ALAT KARYA {e(AUTHOR.upper())}</div></div>
 <div class="wrap"><table class="meta">{_meta_rows(info, extra_meta)}</table>
 {body}{''.join(integ)}
 <p class="note">{e(note or default_note)} File asli dibuka read-only dan tidak diubah oleh alat ini;
 keaslian salinan dibuktikan dengan kecocokan hash SHA-256. Hash seluruh isi paket ada di
-<code>manifest_paket.sha256</code>.</p></div></body></html>"""
+<code>manifest_paket.sha256</code>.</p>
+<div class="foot"><div><b>KODE VERIFIKASI (SHA-256 manifest_hash.txt)</b><br><span class="mono">{verif}</span></div>
+<div class="r">Dibuat dengan <b>{e(TOOL_NAME)} v{TOOL_VERSION}</b><br>Pembuat alat: <b>{e(AUTHOR)}</b><br>
+<a href="{REPO_URL}">{e(REPO_URL)}</a></div></div>
+</div></body></html>"""
     (out / "laporan.html").write_text(doc, encoding="utf-8")
+
+
+# ===========================================================================
+# PDF (dicetak dari laporan.html via Microsoft Edge / Chrome headless)
+# ===========================================================================
+_NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+
+
+def _find_browser() -> Optional[str]:
+    cands = [
+        os.path.expandvars(r"%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"),
+        os.path.expandvars(r"%ProgramFiles%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"),
+        os.path.expandvars(r"%LocalAppData%\Google\Chrome\Application\chrome.exe"),
+    ]
+    for c in cands:
+        if c and "%" not in c and os.path.exists(c):
+            return c
+    return shutil.which("msedge") or shutil.which("chrome")
+
+
+def write_pdf(out: Path, log: LogCb = None) -> Optional[Path]:
+    """Cetak laporan.html -> laporan.pdf (watermark ikut tercetak), lalu tambahkan
+    nomor halaman, kode verifikasi, dan identitas pembuat alat di setiap halaman."""
+    log = log or (lambda m: None)
+    html_path = out / "laporan.html"
+    pdf_path = out / "laporan.pdf"
+    browser = _find_browser()
+    if not browser:
+        log("  [INFO] Edge/Chrome tidak ditemukan - laporan.pdf dilewati (laporan.html tetap tersedia).")
+        return None
+    profile = out.parent.parent / fconfig.TMP_DIR / "pdf_profile"
+    profile.mkdir(parents=True, exist_ok=True)
+    try:
+        subprocess.run([browser, "--headless=new", "--disable-gpu", "--no-first-run", "--no-default-browser-check",
+                        f"--user-data-dir={profile}", "--no-pdf-header-footer",
+                        "--run-all-compositor-stages-before-draw", "--virtual-time-budget=8000",
+                        f"--print-to-pdf={pdf_path}", html_path.as_uri()],
+                       capture_output=True, timeout=240, creationflags=_NO_WINDOW)
+    except Exception as exc:  # noqa: BLE001
+        log(f"  [INFO] Gagal membuat PDF: {exc}")
+        return None
+    if not pdf_path.exists():
+        log("  [INFO] PDF tidak terbentuk - laporan.html tetap tersedia.")
+        return None
+    try:
+        import fitz
+
+        man = out / "manifest_hash.txt"
+        verif = hashlib.sha256(man.read_bytes()).hexdigest() if man.exists() else "-"
+        doc = fitz.open(str(pdf_path))
+        n = doc.page_count
+        for i, page in enumerate(doc, 1):
+            r = page.rect
+            y = r.height - 22
+            page.draw_line(fitz.Point(28, y - 8), fitz.Point(r.width - 28, y - 8), color=(0.83, 0.63, 0.09), width=0.8)
+            page.insert_text(fitz.Point(28, y + 2), f"KODE VERIFIKASI (SHA-256): {verif}", fontsize=6.5,
+                             fontname="cour", color=(0.25, 0.25, 0.3))
+            page.insert_text(fitz.Point(28, y + 11), f"{TOOL_NAME} v{TOOL_VERSION} - pembuat alat: {AUTHOR} - {REPO_URL}",
+                             fontsize=6.5, fontname="helv", color=(0.35, 0.35, 0.4))
+            txt = f"Halaman {i} dari {n}"
+            w = fitz.get_text_length(txt, fontname="helv", fontsize=8)
+            page.insert_text(fitz.Point(r.width - 28 - w, y + 6), txt, fontsize=8, fontname="helv",
+                             color=(0.1, 0.18, 0.4))
+        doc.set_metadata({"title": out.name, "author": AUTHOR, "creator": f"{TOOL_NAME} v{TOOL_VERSION}",
+                          "producer": f"{TOOL_NAME} v{TOOL_VERSION} ({REPO_URL})",
+                          "subject": "Laporan bukti digital", "keywords": f"verifikasi {verif}"})
+        tmp = pdf_path.with_suffix(".tmp.pdf")
+        doc.save(str(tmp), garbage=3, deflate=True)
+        doc.close()
+        os.replace(tmp, pdf_path)
+    except Exception as exc:  # noqa: BLE001
+        log(f"  [INFO] Penomoran halaman PDF gagal ({exc}); PDF tanpa nomor halaman tetap disimpan.")
+    return pdf_path

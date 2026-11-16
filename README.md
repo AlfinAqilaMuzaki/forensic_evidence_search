@@ -2,6 +2,9 @@
 
 **Ekstraksi • Pencarian • Pengamanan Bukti Digital — offline, read-only, dan teraudit**
 
+> **Dibuat oleh: Alfin Aqila Muzaki**
+> Sumber resmi: <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search>
+
 ![Pusat Ekstraksi Bukti](dokumentasi/01_ekstraksi_berjalan.png)
 
 Aplikasi desktop forensik digital untuk Windows. Aplikasi ini **membaca seluruh
@@ -9,15 +12,17 @@ isi folder barang bukti** (video, audio, foto, dan dokumen dalam jumlah ribuan
 hingga ratusan ribu file), **mengubah semua ucapan dan tulisan di dalamnya menjadi
 teks yang bisa dicari**, lalu menunjukkan **di file mana, pada detik ke berapa
 atau halaman berapa** sebuah kalimat muncul. Temuan bisa langsung **diamankan**:
-salinan bukti diverifikasi hash, lalu dibuatkan laporan HTML/CSV yang siap dilampirkan.
+salinan bukti diverifikasi hash, lalu dibuatkan laporan **PDF/HTML/CSV ber-watermark**
+yang siap dilampirkan.
 
 Aplikasi ini juga punya modul **Cari Foto Mirip**. Dengan satu foto referensi,
 modul ini menemukan foto yang sama atau mirip di dalam folder bukti, walaupun foto
 itu sudah di-crop, di-resize, dikompres, di-screenshot, diberi watermark, atau
 diganti namanya.
 
-> **Versi:** 2.0.0 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
-> **Mode:** 100% offline (tidak ada data yang dikirim ke internet)
+> **Versi:** 2.1.0 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
+> **Mode:** 100% offline (tidak ada data yang dikirim ke internet) &nbsp;•&nbsp;
+> **Pembuat:** Alfin Aqila Muzaki
 
 ---
 
@@ -40,6 +45,7 @@ diganti namanya.
 15. [Pemecahan masalah (FAQ)](#15-pemecahan-masalah-faq)
 16. [Batasan yang perlu diketahui](#16-batasan-yang-perlu-diketahui)
 17. [Lampiran: cara kerja teknis](#17-lampiran-cara-kerja-teknis)
+18. [Pembuat & sumber resmi](#18-pembuat--sumber-resmi)
 
 ---
 
@@ -105,7 +111,7 @@ melelahkan, dan rawan terlewat.
 | **01 Ekstraksi Bukti** | Scan seluruh folder bukti, hitung hash SHA-256 + MD5, lalu ekstrak teks: transkrip suara (video & audio), OCR teks di foto dan di frame video, isi dokumen (termasuk OCR PDF scan). Ada statistik live, progres, perkiraan sisa waktu, log, STOP/lanjutkan, dan verifikasi integritas. |
 | **02 Cari Teks** | Cari kalimat di semua hasil ekstraksi dengan tiga mode (Fuzzy, Frasa persis, Semua kata) dan filter jenis file. Panel detail menampilkan pratinjau frame/foto, teks lengkap dengan highlight, path, hash, dan tombol putar di detik temuan. |
 | **03 Cari Foto Mirip** | Index visual sekali per folder bukti, lalu cari dengan foto referensi (pilih atau seret). Ada rincian skor CLIP / pHash / ORB dan penilaian otomatis (foto sama vs mirip). |
-| **Amankan + Laporan** | Untuk hasil teks maupun foto: salinan file asli read-only dengan verifikasi hash, frame, teks, `laporan.html`, `hasil_pencarian.csv`, `manifest_hash.txt`, `manifest_paket.sha256`. |
+| **Amankan + Laporan** | Untuk hasil teks maupun foto: salinan file asli read-only dengan verifikasi hash, frame, teks, **`laporan.pdf`** dan `laporan.html` (ber-watermark logo + teks transparan, kode verifikasi SHA-256, nomor halaman), `hasil_pencarian.csv`, `manifest_hash.txt`, `manifest_paket.sha256`. |
 | **04 Inventaris & Hash** | Daftar seluruh file bukti: jenis, status, jumlah segmen teks, ukuran, cara deteksi tipe, SHA-256, MD5. Bisa difilter dan di-export ke CSV. |
 | **05 Audit Log** | Semua aksi tercatat otomatis (operator = user Windows) dengan rantai hash. Ada tombol verifikasi rantai. |
 
@@ -373,16 +379,33 @@ Di bawah tabel hasil:
 - **AMANKAN SEMUA + LAPORAN**: semua temuan.
 
 Aplikasi membuat paket di `DATA_ANALISIS\<folder>\bukti_diamankan\<tanggal_jam>_<kalimat>\`,
-lalu membuka `laporan.html` secara otomatis:
+lalu membuka laporannya secara otomatis. Laporan dibuat dalam dua format, **PDF** dan **HTML**:
 
-![Laporan temuan](dokumentasi/05_laporan_bukti_html.png)
+![Laporan PDF dengan watermark](dokumentasi/05_laporan_bukti_pdf.png)
+
+Pengamanan pada laporan:
+
+| Elemen | Fungsi |
+|---|---|
+| **Watermark logo transparan** di tengah setiap halaman | Menandai dokumen sebagai keluaran resmi alat. Bila ada `logo.png` di folder aplikasi, logo itu yang dipakai |
+| **Watermark teks miring berulang** (nama alat, waktu cetak, operator, pembuat alat) | Menyulitkan pemalsuan atau penggunaan potongan laporan di luar konteks |
+| **Kode verifikasi SHA-256** di footer setiap halaman | Hash dari `manifest_hash.txt`. Siapa pun bisa menghitung ulang hash file itu untuk membuktikan laporan cocok dengan paket buktinya |
+| **Nomor halaman** "Halaman x dari y" | Mencegah halaman hilang atau disisipkan tanpa terdeteksi |
+| **Identitas alat & pembuat** (Alfin Aqila Muzaki + link GitHub) | Tercantum di header, metadata, dan footer laporan |
+| **Metadata PDF** (author, creator, kode verifikasi) | Bisa dilihat di *Properties* file PDF |
+
+> PDF dicetak otomatis memakai Microsoft Edge (bawaan Windows 10/11) atau Google Chrome
+> dalam mode headless. Jika keduanya tidak ada, `laporan.html` tetap dibuat dan bisa
+> dicetak ke PDF secara manual (Ctrl+P). Watermark ikut tercetak.
 
 Isi paket bukti:
 
 ```
 20261116_140351_hay_tolong_lakukan_penyerangan_itu/
-├── laporan.html            laporan siap cetak: identitas, kalimat dicari, daftar temuan
-│                           (kutipan ber-highlight + cuplikan frame), tabel integritas
+├── laporan.pdf             laporan resmi ber-watermark, nomor halaman, kode verifikasi
+├── laporan.html            versi HTML dari laporan yang sama (bisa dibuka di browser)
+│                           identitas, kalimat dicari, daftar temuan (kutipan ber-highlight +
+│                           cuplikan frame), tabel integritas, pembuat alat
 ├── hasil_pencarian.csv     data temuan untuk Excel
 ├── manifest_hash.txt       hash SHA-256/MD5 file asli + hash salinan + status COCOK
 ├── manifest_paket.sha256   hash setiap file di dalam paket
@@ -523,13 +546,18 @@ semalaman. Proses aman dihentikan dan dilanjutkan kapan saja.
 
 ## 11. Tema tampilan
 
-Tombol tema ada di kanan atas. Pilihan tema diingat untuk pemakaian berikutnya.
+Tersedia dua tema: **Dark** dan **Light**. Ganti dengan tombol **TEMA LIGHT / TEMA DARK**
+di kanan atas. Pilihan tema diingat untuk pemakaian berikutnya.
 
-| SIBER BIRU (gelap) | EMAS ORANYE (terang) |
+| Dark | Light |
 |---|---|
-| ![Tema gelap](dokumentasi/01_ekstraksi_berjalan.png) | ![Tema terang](dokumentasi/10_tema_emas_oranye_ekstraksi.png) |
-| ![Tema gelap cari teks](dokumentasi/03_cari_teks_video_audio_dokumen.png) | ![Tema terang cari teks](dokumentasi/08_tema_emas_oranye_cari_teks.png) |
-| ![Tema gelap foto mirip](dokumentasi/04_cari_foto_mirip.png) | ![Tema terang foto mirip](dokumentasi/09_tema_emas_oranye_foto_mirip.png) |
+| ![Tema dark](dokumentasi/01_ekstraksi_berjalan.png) | ![Tema light](dokumentasi/10_tema_light_ekstraksi.png) |
+| ![Tema dark cari teks](dokumentasi/03_cari_teks_video_audio_dokumen.png) | ![Tema light cari teks](dokumentasi/08_tema_light_cari_teks.png) |
+| ![Tema dark foto mirip](dokumentasi/04_cari_foto_mirip.png) | ![Tema light foto mirip](dokumentasi/09_tema_light_foto_mirip.png) |
+
+Nama pembuat (**Alfin Aqila Muzaki**) tampil di header, panel kiri (beserta tombol
+**GITHUB**), judul jendela, dan status bar. Tombol **TENTANG** di kanan atas
+menampilkan versi, pembuat, dan link sumber resmi.
 
 Logo instansi bisa ditampilkan di header: letakkan file **`logo.png`** (disarankan
 persegi, minimal 128×128 px) di folder aplikasi, lalu jalankan ulang aplikasi.
@@ -796,6 +824,24 @@ hanya melihat satu angka gabungan.
 
 ---
 
+## 18. Pembuat & sumber resmi
+
+| | |
+|---|---|
+| **Pembuat** | **Alfin Aqila Muzaki** |
+| **Repository resmi** | <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search> |
+| **Versi** | 2.1.0 |
+
+Cyber Forensic Evidence Search dirancang dan dikembangkan oleh **Alfin Aqila Muzaki**.
+Identitas pembuat dan alamat repository resmi ikut tercantum di aplikasi, di setiap
+laporan PDF/HTML, di manifest hash, dan di file teks hasil ekstraksi. Dengan begitu,
+asal-usul alat yang dipakai untuk menghasilkan suatu laporan bukti selalu bisa ditelusuri.
+
+Unduh aplikasi hanya dari repository resmi di atas. Laporan, saran, atau pertanyaan
+silakan disampaikan melalui menu **Issues** di repository tersebut.
+
 ---
 
-*Cyber Forensic Evidence Search v2.0.0 — alat bantu forensik digital. Hasil pengenalan otomatis wajib diverifikasi oleh pemeriksa.*
+*Cyber Forensic Evidence Search v2.1.0 — dibuat oleh Alfin Aqila Muzaki —
+<https://github.com/AlfinAqilaMuzaki/forensic_evidence_search>. Alat bantu forensik
+digital; hasil pengenalan otomatis wajib diverifikasi oleh pemeriksa.*

@@ -193,14 +193,14 @@ class Emblem(QWidget):
 
 
 class HeaderBar(QWidget):
-    def __init__(self, title: str, subtitle: str, logo: Optional[str] = None):
+    def __init__(self, title: str, subtitle: str, logo: Optional[str] = None, author: str = ""):
         super().__init__()
-        self.setFixedHeight(84)
-        self._title, self._sub = title, subtitle
+        self.setFixedHeight(96)
+        self._title, self._sub, self._author = title, subtitle, author
         lay = QHBoxLayout(self)
         lay.setContentsMargins(18, 10, 18, 10)
         lay.setSpacing(14)
-        self.emblem = Emblem(60, logo)
+        self.emblem = Emblem(66, logo)
         lay.addWidget(self.emblem)
         lay.addSpacing(330)  # ruang teks judul (digambar di paintEvent)
         lay.addStretch(1)
@@ -249,7 +249,7 @@ class HeaderBar(QWidget):
         p.fillRect(0, h - 3, w, 3, QColor(c["accent"]))
         p.fillRect(0, h - 3, 260, 3, QColor(c["stripe"]))
         # teks judul
-        x = 18 + 60 + 16
+        x = 18 + 66 + 16
         f = QFont(theme.HEAD_FONT)
         f.setPixelSize(26)
         f.setWeight(QFont.Bold)
@@ -258,15 +258,24 @@ class HeaderBar(QWidget):
         glow = QColor(c["accent"])
         glow.setAlpha(90)
         p.setPen(glow)
-        p.drawText(QRectF(x + 1, 13, 700, 36), Qt.AlignLeft | Qt.AlignVCenter, self._title)
+        p.drawText(QRectF(x + 1, 9, 700, 36), Qt.AlignLeft | Qt.AlignVCenter, self._title)
         p.setPen(QColor("#ffffff"))
-        p.drawText(QRectF(x, 12, 700, 36), Qt.AlignLeft | Qt.AlignVCenter, self._title)
+        p.drawText(QRectF(x, 8, 700, 36), Qt.AlignLeft | Qt.AlignVCenter, self._title)
         f2 = QFont(theme.HEAD_FONT)
         f2.setPixelSize(12)
         f2.setLetterSpacing(QFont.AbsoluteSpacing, 2.5)
         p.setFont(f2)
         p.setPen(QColor(c["stripe"]))
-        p.drawText(QRectF(x, 46, 800, 20), Qt.AlignLeft | Qt.AlignVCenter, self._sub)
+        p.drawText(QRectF(x, 42, 800, 20), Qt.AlignLeft | Qt.AlignVCenter, self._sub)
+        if self._author:
+            f3 = QFont(theme.MONO_FONT)
+            f3.setPixelSize(11)
+            f3.setLetterSpacing(QFont.AbsoluteSpacing, 1)
+            p.setFont(f3)
+            col = QColor("#ffffff")
+            col.setAlpha(200)
+            p.setPen(col)
+            p.drawText(QRectF(x, 64, 900, 18), Qt.AlignLeft | Qt.AlignVCenter, self._author)
 
 
 # ---------------------------------------------------------------------------

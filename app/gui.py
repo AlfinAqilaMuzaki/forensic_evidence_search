@@ -16,7 +16,10 @@ from PySide6.QtWidgets import (
     QStackedWidget, QVBoxLayout, QWidget,
 )
 
-from .forensic import TOOL_NAME, TOOL_VERSION
+from PySide6.QtCore import QUrl
+from PySide6.QtGui import QDesktopServices
+
+from .forensic import AUTHOR, REPO_URL, TOOL_NAME, TOOL_VERSION
 from .ui import theme
 from .ui.page_extract import ExtractPage
 from .ui.page_photo import PhotoPage
@@ -32,7 +35,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f"{TOOL_NAME} v{TOOL_VERSION}")
+        self.setWindowTitle(f"{TOOL_NAME} v{TOOL_VERSION}  —  by {AUTHOR}")
         self.resize(1480, 960)
         self.setMinimumSize(1180, 760)
         self.state = AppState()
@@ -53,13 +56,17 @@ class MainWindow(QMainWindow):
         v.setSpacing(0)
 
         self.header = HeaderBar("CYBER FORENSIC EVIDENCE SEARCH",
-                                "EKSTRAKSI  •  PENCARIAN  •  PENGAMANAN BUKTI DIGITAL", logo)
+                                "EKSTRAKSI  •  PENCARIAN  •  PENGAMANAN BUKTI DIGITAL", logo,
+                                f"v{TOOL_VERSION}  •  dibuat oleh {AUTHOR.upper()}  •  github.com/AlfinAqilaMuzaki")
         for t in ("● OFFLINE", "🔒 BUKTI READ-ONLY"):
             c = label(t, "HeaderChip")
             self.header.right.addWidget(c, 0, Qt.AlignVCenter)
-        self.btn_theme = button("", "theme", "", "Ganti tema: Siber Biru (gelap) / Emas Oranye (terang)")
+        self.btn_theme = button("", "theme", "", "Ganti tema tampilan: Dark / Light")
         self.btn_theme.clicked.connect(self.toggle_theme)
         self.header.right.addWidget(self.btn_theme, 0, Qt.AlignVCenter)
+        self.btn_about = button("TENTANG", "info", "", "Tentang aplikasi & pembuat")
+        self.btn_about.clicked.connect(self.show_about)
+        self.header.right.addWidget(self.btn_about, 0, Qt.AlignVCenter)
         v.addWidget(self.header)
 
         # --- bar folder bukti
@@ -128,8 +135,22 @@ class MainWindow(QMainWindow):
         sl.addWidget(label("  ALUR KERJA", "StatCaption"))
         sl.addWidget(label("  1. Pilih folder bukti\n  2. Ekstraksi (sekali)\n  3. Cari teks / foto\n"
                            "  4. Amankan + laporan\n  5. Verifikasi integritas", "SideFoot"))
-        sl.addSpacing(10)
-        sl.addWidget(label(f"  {TOOL_NAME}\n  v{TOOL_VERSION} • offline", "SideFoot"))
+        sl.addSpacing(12)
+        credit = QFrame()
+        credit.setObjectName("Credit")
+        cl = QVBoxLayout(credit)
+        cl.setContentsMargins(12, 10, 12, 10)
+        cl.setSpacing(4)
+        cl.addWidget(label("DIBUAT OLEH", "StatCaption"))
+        cl.addWidget(label(AUTHOR.upper(), "CreditName", wrap=True))
+        cl.addWidget(label(f"{TOOL_NAME}\nv{TOOL_VERSION} • offline", "SideFoot"))
+        gh = button("GITHUB", "open", "Ghost", REPO_URL)
+        gh.clicked.connect(lambda: QDesktopServices.openUrl(QUrl(REPO_URL)))
+        cl.addWidget(gh)
+        cwrap = QHBoxLayout()
+        cwrap.setContentsMargins(10, 0, 10, 0)
+        cwrap.addWidget(credit)
+        sl.addLayout(cwrap)
         body.addWidget(side)
         body.addWidget(self.stack, 1)
         v.addLayout(body, 1)
@@ -137,7 +158,8 @@ class MainWindow(QMainWindow):
 
         self.sb_ws = label("Folder bukti belum dipilih")
         self.statusBar().addWidget(self.sb_ws, 1)
-        self.statusBar().addPermanentWidget(label("Folder bukti dibuka READ-ONLY  •  hash SHA-256/MD5  •  audit log berantai"))
+        self.statusBar().addPermanentWidget(label("READ-ONLY  •  SHA-256/MD5  •  audit log berantai"))
+        self.statusBar().addPermanentWidget(label(f"© 2026 {AUTHOR}"))
         self.go("extract")
 
     # ------------------------------------------------------------- aksi
@@ -175,9 +197,22 @@ class MainWindow(QMainWindow):
         theme.set_current(name)
         QApplication.instance().setStyleSheet(theme.qss())
         refresh_theme_widgets()
-        other = "EMAS ORANYE" if name == "dark" else "SIBER BIRU"
-        self.btn_theme.setText(f"TEMA {other}")
+        self.btn_theme.setText("TEMA LIGHT" if name == "dark" else "TEMA DARK")
         self.header.update()
+
+    def show_about(self) -> None:
+        box = QMessageBox(self)
+        box.setWindowTitle(f"Tentang {TOOL_NAME}")
+        box.setTextFormat(Qt.RichText)
+        box.setTextInteractionFlags(Qt.TextBrowserInteraction)
+        box.setText(
+            f"<h3 style='margin:0'>{TOOL_NAME}</h3><p>Versi {TOOL_VERSION}</p>"
+            f"<p>Alat forensik digital offline untuk ekstraksi, pencarian, dan pengamanan bukti digital: "
+            f"teks di video, audio, foto, dan dokumen, serta pencarian foto mirip.</p>"
+            f"<p><b>Dibuat oleh:</b> {AUTHOR}<br>"
+            f"<b>Sumber resmi:</b> <a href='{REPO_URL}'>{REPO_URL}</a></p>"
+            f"<p style='color:gray'>Hasil OCR/transkrip otomatis wajib diverifikasi oleh pemeriksa.</p>")
+        box.exec()
 
     def any_busy(self) -> bool:
         p = self.pages
