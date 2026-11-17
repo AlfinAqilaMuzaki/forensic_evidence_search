@@ -26,10 +26,14 @@ class DropImage(QLabel):
     dropped = Signal(str)
 
     def __init__(self):
-        super().__init__("SERET FOTO REFERENSI KE SINI\natau klik PILIH FOTO")
+        super().__init__("SERET FOTO\nKE SINI\n\natau klik\nPILIH FOTO")
+        self.setWordWrap(True)
         self.setAlignment(Qt.AlignCenter)
         self.setAcceptDrops(True)
-        self.setFixedSize(250, 230)
+        self.setMinimumSize(170, 170)
+        self.setMaximumSize(260, 240)
+        from PySide6.QtWidgets import QSizePolicy
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.setObjectName("Muted")
         themed(self)
         self.on_theme()
@@ -51,6 +55,7 @@ class PhotoPage(QWidget):
     def __init__(self, state: AppState):
         super().__init__()
         self.setObjectName("Page")
+        self.setMinimumSize(760, 760)
         self.state = state
         self.query_path: str | None = None
         self.results: list = []
@@ -93,15 +98,17 @@ class PhotoPage(QWidget):
         self.q_info = label("-", "PathLabel", wrap=True)
         self.q_info.setTextInteractionFlags(Qt.TextSelectableByMouse)
         self.q_info.setMaximumWidth(330)
+        self.q_info.setMinimumWidth(150)
         qcol.addWidget(self.q_info)
         qcol.addStretch(1)
         g = QGridLayout()
-        g.addWidget(label("Jumlah hasil (Top-N)", "Muted"), 0, 0)
+        g.addWidget(label("Top-N hasil", "Muted"), 0, 0)
         self.topn = QSpinBox()
         self.topn.setRange(5, 500)
         self.topn.setValue(50)
         g.addWidget(self.topn, 0, 1)
-        self.rerank = QCheckBox("ORB rerank (tahan crop, lebih lambat)")
+        self.rerank = QCheckBox("ORB rerank (tahan crop)")
+        self.rerank.setToolTip("Lebih akurat untuk foto yang di-crop/di-screenshot, sedikit lebih lambat")
         self.rerank.setChecked(True)
         g.addWidget(self.rerank, 1, 0, 1, 2)
         qcol.addLayout(g)
@@ -142,7 +149,7 @@ class PhotoPage(QWidget):
         root.addLayout(top)
 
         split = QSplitter(Qt.Horizontal)
-        rc = Card("Hasil — diurutkan dari paling mirip", "photo2")
+        rc = Card("Hasil (paling mirip dulu)", "photo2")
         self.grid = QListWidget()
         self.grid.setObjectName("Grid")
         self.grid.setViewMode(QListWidget.IconMode)
@@ -253,7 +260,7 @@ class PhotoPage(QWidget):
             QMessageBox.warning(self, "Foto", "File bukan gambar yang bisa dibuka.")
             return
         self.query_path = p
-        self.drop.setPixmap(pix.scaled(244, 224,
+        self.drop.setPixmap(pix.scaled(max(160, self.drop.width() - 6), max(160, self.drop.height() - 6),
                                        Qt.KeepAspectRatio, Qt.SmoothTransformation))
         try:
             sha, _ = hash_file(p)

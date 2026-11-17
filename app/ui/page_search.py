@@ -32,6 +32,7 @@ class SearchPage(QWidget):
     def __init__(self, state: AppState):
         super().__init__()
         self.setObjectName("Page")
+        self.setMinimumSize(760, 640)
         self.state = state
         self.hits: list[Hit] = []
         self.searcher: TextSearcher | None = None

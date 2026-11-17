@@ -20,7 +20,7 @@ modul ini menemukan foto yang sama atau mirip di dalam folder bukti, walaupun fo
 itu sudah di-crop, di-resize, dikompres, di-screenshot, diberi watermark, atau
 diganti namanya.
 
-> **Versi:** 2.4.0 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
+> **Versi:** 2.4.1 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
 > **Mode:** 100% offline (tidak ada data yang dikirim ke internet) &nbsp;•&nbsp;
 > **Pembuat:** Alfin Aqila Muzaki
 
@@ -1035,7 +1035,7 @@ hanya melihat satu angka gabungan.
 |---|---|
 | **Pembuat** | **Alfin Aqila Muzaki** |
 | **Repository resmi** | <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search> |
-| **Versi** | 2.4.0 |
+| **Versi** | 2.4.1 |
 
 Cyber Forensic Evidence Search dirancang dan dikembangkan oleh **Alfin Aqila Muzaki**.
 Identitas pembuat dan alamat repository resmi ikut tercantum di aplikasi, di setiap
@@ -1047,6 +1047,6 @@ silakan disampaikan melalui menu **Issues** di repository tersebut.
 
 ---
 
-*Cyber Forensic Evidence Search v2.4.0 — dibuat oleh Alfin Aqila Muzaki —
+*Cyber Forensic Evidence Search v2.4.1 — dibuat oleh Alfin Aqila Muzaki —
 <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search>. Alat bantu forensik
 digital; hasil pengenalan otomatis wajib diverifikasi oleh pemeriksa.*

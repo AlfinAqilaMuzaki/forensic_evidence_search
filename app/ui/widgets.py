@@ -202,12 +202,36 @@ class HeaderBar(QWidget):
         lay.setSpacing(14)
         self.emblem = Emblem(66, logo)
         lay.addWidget(self.emblem)
-        lay.addSpacing(330)  # ruang teks judul (digambar di paintEvent)
+        # ruang teks judul/subjudul/pembuat (digambar di paintEvent) dihitung dari lebar teks sebenarnya
+        self.text_space = QWidget()
+        self.text_space.setFixedWidth(self._text_width() + 12)
+        self.text_space.setAttribute(Qt.WA_TransparentForMouseEvents)
+        lay.addWidget(self.text_space)
         lay.addStretch(1)
         self.right = QHBoxLayout()
         self.right.setSpacing(8)
         lay.addLayout(self.right)
         themed(self)
+
+    def _fonts(self):
+        f = QFont(theme.HEAD_FONT)
+        f.setPixelSize(26)
+        f.setWeight(QFont.Bold)
+        f.setLetterSpacing(QFont.AbsoluteSpacing, 3)
+        f2 = QFont(theme.HEAD_FONT)
+        f2.setPixelSize(12)
+        f2.setLetterSpacing(QFont.AbsoluteSpacing, 2.5)
+        f3 = QFont(theme.MONO_FONT)
+        f3.setPixelSize(11)
+        f3.setLetterSpacing(QFont.AbsoluteSpacing, 1)
+        return f, f2, f3
+
+    def _text_width(self) -> int:
+        from PySide6.QtGui import QFontMetrics
+
+        f, f2, f3 = self._fonts()
+        return max(QFontMetrics(f).horizontalAdvance(self._title), QFontMetrics(f2).horizontalAdvance(self._sub),
+                   QFontMetrics(f3).horizontalAdvance(self._author or ""))
 
     def on_theme(self) -> None:
         self.update()

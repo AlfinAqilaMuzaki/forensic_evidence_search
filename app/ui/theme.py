@@ -120,14 +120,16 @@ QLabel#ChipWarn {{ font-family: "{HEAD_FONT}"; font-size: 8.5pt; letter-spacing:
 QLabel#HeaderChip {{ font-family: "{HEAD_FONT}"; font-size: 8.5pt; letter-spacing: 1px; padding: 4px 10px;
     color: #ffffff; background: rgba(0,0,0,110); border: 1px solid {c['stripe']}; border-radius: 2px; }}
 QFrame#Credit {{ background: {c['bg3']}; border: 1px solid {c['border2']}; border-left: 3px solid {c['stripe'] if dark else c['accent']}; }}
-QLabel#CreditName {{ font-family: "{HEAD_FONT}"; font-size: 10.5pt; font-weight: 700; color: {c['title']}; letter-spacing: 1px; }}
+QLabel#CreditName {{ font-family: "{HEAD_FONT}"; font-size: 10pt; font-weight: 700; color: {c['title']}; letter-spacing: 0.5px; }}
+QScrollArea#SideScroll {{ background: {c['bg2']}; border: none; border-right: 1px solid {c['border']}; }}
+QScrollArea#SideScroll > QWidget > QWidget {{ background: {c['bg2']}; }}
 QLabel#PathLabel {{ font-family: "{MONO_FONT}"; font-size: 9pt; color: {c['muted']}; }}
 
 /* ---------- sidebar ---------- */
-QFrame#Sidebar {{ background: {c['bg2']}; border-right: 1px solid {c['border']}; }}
+QFrame#Sidebar {{ background: {c['bg2']}; border: none; }}
 QPushButton#Nav {{ text-align: left; padding: 12px 14px 12px 14px; border: none; border-left: 3px solid transparent;
                   background: transparent; color: {c['muted']}; font-family: "{HEAD_FONT}"; font-size: 10.5pt;
-                  letter-spacing: 1px; border-radius: 0; }}
+                  letter-spacing: 0.5px; border-radius: 0; }}
 QPushButton#Nav:hover {{ color: {c['text']}; background: {c['bg3']}; }}
 QPushButton#Nav:checked {{ color: {c['accent']}; background: {c['select']}; border-left: 3px solid {c['accent']}; }}
 QLabel#SideFoot {{ color: {c['muted']}; font-family: "{MONO_FONT}"; font-size: 8pt; }}

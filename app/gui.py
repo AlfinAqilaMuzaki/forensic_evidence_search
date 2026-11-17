@@ -13,7 +13,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtWidgets import (
     QApplication, QButtonGroup, QFileDialog, QFrame, QHBoxLayout, QLineEdit, QMainWindow, QMessageBox,
-    QStackedWidget, QVBoxLayout, QWidget,
+    QScrollArea, QStackedWidget, QVBoxLayout, QWidget,
 )
 
 from PySide6.QtCore import QUrl
@@ -37,7 +37,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle(f"{TOOL_NAME} v{TOOL_VERSION}  —  by {AUTHOR}")
         self.resize(1480, 960)
-        self.setMinimumSize(1180, 760)
+        self.setMinimumSize(960, 600)
         self.state = AppState()
         logo = app_dir() / "logo.png"
         from .forensic.fconfig import BASE_DIR
@@ -61,9 +61,11 @@ class MainWindow(QMainWindow):
         self.header = HeaderBar("CYBER FORENSIC EVIDENCE SEARCH",
                                 "EKSTRAKSI  •  PENCARIAN  •  PENGAMANAN BUKTI DIGITAL", logo,
                                 f"v{TOOL_VERSION}  •  dibuat oleh {AUTHOR.upper()}  •  github.com/AlfinAqilaMuzaki")
+        self.header_chips = []
         for t in ("● OFFLINE", "🔒 BUKTI READ-ONLY"):
             c = label(t, "HeaderChip")
             self.header.right.addWidget(c, 0, Qt.AlignVCenter)
+            self.header_chips.append(c)
         self.btn_theme = button("", "theme", "", "Ganti tema tampilan: Dark / Light")
         self.btn_theme.clicked.connect(self.toggle_theme)
         self.header.right.addWidget(self.btn_theme, 0, Qt.AlignVCenter)
@@ -78,7 +80,7 @@ class MainWindow(QMainWindow):
         bl = QHBoxLayout(bar)
         bl.setContentsMargins(16, 10, 16, 10)
         bl.setSpacing(10)
-        bl.addWidget(label("FOLDER BARANG BUKTI", "CardTitle"))
+        bl.addWidget(label("FOLDER BUKTI", "CardTitle"))
         self.ev_edit = QLineEdit()
         self.ev_edit.setReadOnly(True)
         self.ev_edit.setPlaceholderText("Belum dipilih — folder berisi video, foto, audio, dokumen (tidak akan diubah)")
@@ -95,7 +97,8 @@ class MainWindow(QMainWindow):
         b_hist.clicked.connect(self.show_history)
         bl.addWidget(b_hist)
         bl.addSpacing(12)
-        bl.addWidget(label("DATA HASIL", "StatCaption"))
+        self.ws_title = label("DATA HASIL", "StatCaption")
+        bl.addWidget(self.ws_title)
         self.ws_lbl = label("-", "PathLabel")
         self.ws_lbl.setMaximumWidth(330)
         self.ws_lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -116,7 +119,6 @@ class MainWindow(QMainWindow):
         body.setSpacing(0)
         side = QFrame()
         side.setObjectName("Sidebar")
-        side.setFixedWidth(232)
         sl = QVBoxLayout(side)
         sl.setContentsMargins(0, 14, 0, 12)
         sl.setSpacing(2)
@@ -143,7 +145,7 @@ class MainWindow(QMainWindow):
             self.navgroup.addButton(nb)
             self.navbtn[key] = nb
             sl.addWidget(nb)
-            self.stack.addWidget(self.pages[key])
+            self.stack.addWidget(self._scroll(self.pages[key]))
         sl.addStretch(1)
         sl.addWidget(label("  ALUR KERJA", "StatCaption"))
         sl.addWidget(label("  1. Pilih folder bukti\n  2. Ekstraksi (sekali)\n  3. Cari teks / foto\n"
@@ -164,7 +166,14 @@ class MainWindow(QMainWindow):
         cwrap.setContentsMargins(10, 0, 10, 0)
         cwrap.addWidget(credit)
         sl.addLayout(cwrap)
-        body.addWidget(side)
+        side_scroll = QScrollArea()
+        side_scroll.setObjectName("SideScroll")
+        side_scroll.setWidget(side)
+        side_scroll.setWidgetResizable(True)
+        side_scroll.setFixedWidth(268)
+        side_scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        side_scroll.setFrameShape(QFrame.NoFrame)
+        body.addWidget(side_scroll)
         body.addWidget(self.stack, 1)
         v.addLayout(body, 1)
         self.setCentralWidget(root)
@@ -178,11 +187,31 @@ class MainWindow(QMainWindow):
     # ------------------------------------------------------------- aksi
     def go(self, key: str) -> None:
         self.navbtn[key].setChecked(True)
-        self.stack.setCurrentWidget(self.pages[key])
+        self.stack.setCurrentWidget(self._wraps[key])
         if key in ("inventory", "audit"):
             self.pages[key].refresh()
         if key == "photo":
             self.pages["photo"].refresh_index_info()
+
+    def _scroll(self, page: QWidget) -> QScrollArea:
+        """Halaman dibungkus scroll area: di layar kecil/skala 125-150% isi tidak saling tumpuk."""
+        sa = QScrollArea()
+        sa.setWidget(page)
+        sa.setWidgetResizable(True)
+        sa.setFrameShape(QFrame.NoFrame)
+        if not hasattr(self, "_wraps"):
+            self._wraps = {}
+        self._wraps[next(k for k, v in self.pages.items() if v is page)] = sa
+        return sa
+
+    def resizeEvent(self, e) -> None:  # noqa: N802 - tata letak responsif
+        super().resizeEvent(e)
+        w = self.width()
+        for c in getattr(self, "header_chips", []):
+            c.setVisible(w >= 1420)
+        if hasattr(self, "ws_title"):
+            self.ws_title.setVisible(w >= 1380)
+            self.ws_lbl.setVisible(w >= 1380)
 
     def pick_evidence(self) -> None:
         if self.any_busy():
@@ -316,7 +345,11 @@ def main() -> None:
     app.setFont(QFont(theme.BODY_FONT, 10))
     theme.load_saved()
     win = MainWindow()
-    win.show()
+    avail = app.primaryScreen().availableGeometry()
+    if avail.width() < 1500 or avail.height() < 980:
+        win.showMaximized()   # layar laptop / skala 125-150%: pakai seluruh layar
+    else:
+        win.show()
     sys.exit(app.exec())
 
 

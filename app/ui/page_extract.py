@@ -24,7 +24,7 @@ def page_header(title: str, sub: str) -> QWidget:
     v.setContentsMargins(2, 0, 0, 4)
     v.setSpacing(0)
     v.addWidget(label(title, "PageTitle"))
-    v.addWidget(label(sub, "PageSub"))
+    v.addWidget(label(sub, "PageSub", wrap=True))
     return w
 
 
@@ -34,6 +34,7 @@ class ExtractPage(QWidget):
     def __init__(self, state: AppState):
         super().__init__()
         self.setObjectName("Page")
+        self.setMinimumSize(760, 860)   # di bawah ini halaman di-scroll, bukan ditumpuk
         self.state = state
         self.runner = TaskRunner(self)
         self.runner.progress.connect(self._on_progress)
@@ -71,8 +72,8 @@ class ExtractPage(QWidget):
             "segments": StatCard("Segmen teks", "text"),
             "mismatch": StatCard("Ekstensi disamarkan", "warn", "warn"),
         }
-        for i, w in enumerate(self.stats.values()):
-            grid.addWidget(w, i // 6, i % 6)
+        self._grid, self._cols = grid, 0
+        self._relayout_stats(6)
         root.addLayout(grid)
 
         mid = QHBoxLayout()
@@ -84,8 +85,8 @@ class ExtractPage(QWidget):
         g.setHorizontalSpacing(14)
         g.setVerticalSpacing(8)
         self.chk = {}
-        for i, (k, txt) in enumerate((("document", "Dokumen && export medsos  (PDF, Office, TXT, Email, export akun JSON/HTML/CSV)"),
-                                      ("database", "Database aplikasi HP  (WhatsApp, Telegram, Messenger, Instagram, LINE, SMS…)"),
+        for i, (k, txt) in enumerate((("document", "Dokumen && export medsos  (PDF, Office, TXT, JSON…)"),
+                                      ("database", "Database aplikasi HP  (WhatsApp, Telegram, dll)"),
                                       ("image", "Foto  (OCR teks dalam gambar)"),
                                       ("audio", "Audio  (transkrip suara → teks)"),
                                       ("video", "Video"))):
@@ -190,6 +191,20 @@ class ExtractPage(QWidget):
         self.console.setMaximumBlockCount(50000)
         lc.body.addWidget(self.console)
         root.addWidget(lc, 1)
+
+    def _relayout_stats(self, cols: int) -> None:
+        if cols == self._cols:
+            return
+        self._cols = cols
+        for w in self.stats.values():
+            self._grid.removeWidget(w)
+        for i, w in enumerate(self.stats.values()):
+            self._grid.addWidget(w, i // cols, i % cols)
+
+    def resizeEvent(self, e) -> None:  # noqa: N802 - kartu statistik 6/4/3 kolom sesuai lebar
+        super().resizeEvent(e)
+        w = self.width()
+        self._relayout_stats(6 if w >= 1180 else 4 if w >= 820 else 3)
 
     # ------------------------------------------------------------- helpers
     def log(self, m: str) -> None:
