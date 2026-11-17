@@ -320,11 +320,20 @@ Setelah selesai akan muncul tulisan `SELESAI. Semua model tersimpan di folder mo
 
 ### Langkah 8 — Jalankan aplikasi
 
-```powershell
-python main.py
-```
-atau **double-click `jalankan.bat`** (tanpa venv), atau buat shortcut berisi
-`.venv\Scripts\pythonw.exe main.py` (dengan venv, tanpa jendela konsol).
+Cara paling mudah (tanpa jendela CMD):
+
+| Cara | Keterangan |
+|---|---|
+| **Double-click `buat_shortcut_desktop.bat`** (sekali saja) | Membuat ikon **Cyber Forensic Evidence Search** di Desktop. Setelah itu cukup double-click ikon tersebut |
+| **Double-click `jalankan.bat`** | Membuka aplikasi. Jendela CMD menutup sendiri |
+| `python main.py` (di terminal) | Untuk developer, karena log tampil di terminal |
+
+Kedua file `.bat` memakai `pythonw.exe` (Python tanpa jendela konsol), dan otomatis memakai
+`.venv` bila ada. Bila terjadi error, pesan ditampilkan di layar dan detailnya dicatat di
+`DATA_ANALISIS\app_error.log`.
+
+> Versi installer (`Setup.exe`) tidak pernah menampilkan jendela CMD dan sudah membuat ikon
+> Desktop sendiri, jadi langkah ini hanya untuk versi source code.
 
 Cek cepat tanpa membuka tampilan (memeriksa folder data, FFmpeg, browser PDF, CLIP, EasyOCR, dan Whisper; semua harus `[OK]`):
 ```powershell
@@ -786,7 +795,8 @@ tidak berubah, verifikasi hash 14/14 cocok, rantai audit utuh → `HASIL: LULUS`
 ```
 forensic_evidence_search/
 ├── main.py                     entry point (GUI) + --selftest
-├── jalankan.bat                menjalankan aplikasi dari source
+├── jalankan.bat                menjalankan aplikasi dari source (tanpa jendela CMD)
+├── buat_shortcut_desktop.bat   membuat ikon aplikasi di Desktop (versi source)
 ├── build_exe.bat               build EXE (dist\ForensicEvidenceSearch\) + self-test otomatis
 ├── build_installer.bat         membuat installer Setup.exe (Inno Setup)
 ├── installer/                  skrip installer (ForensicEvidenceSearch.iss)
