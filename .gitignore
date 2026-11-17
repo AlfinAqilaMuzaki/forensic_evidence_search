@@ -44,3 +44,4 @@ Thumbs.db
 # Build installer & file sementara build
 installer_output/
 _tmp_build/
+tests/_whatsapp_dataset/

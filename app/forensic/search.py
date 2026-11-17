@@ -42,6 +42,9 @@ class Hit:
     md5: str
     frame_path: Optional[str]
     match_span: Optional[tuple[int, int]]  # posisi kecocokan di `text`
+    ref: Optional[str] = None        # file media yang dirujuk pesan chat (mis. voice note)
+    ref_path: Optional[str] = None   # path file media tsb di folder bukti (bila ditemukan)
+    context: Optional[str] = None    # untuk file media: pesan chat tempat file ini dikirim
 
     @property
     def source_label(self) -> str:
@@ -157,7 +160,7 @@ class TextSearcher:
             chunk = all_ids[chunk_start:chunk_start + 900]
             qs = ",".join("?" * len(chunk))
             for r in self.conn.execute(
-                    f"SELECT id, file_id, source, t_start, t_end, page, label, text, frame_path "
+                    f"SELECT id, file_id, source, t_start, t_end, page, label, text, frame_path, ref "
                     f"FROM segments WHERE id IN ({qs})", chunk):
                 segs[r[0]] = r
         fids = sorted({segs[sids[0]][1] for sids, _ in picked})
@@ -181,10 +184,37 @@ class TextSearcher:
                 source=first[2], label=label or "-", t_start=t_start, t_end=t_end, page=first[5],
                 text=text, sha256=f[4] or "", md5=f[5] or "",
                 frame_path=next((r[8] for r in rows if r[8]), None),
+                ref=next((r[9] for r in rows if r[9]), None),
                 match_span=locate(q, text, mode),
             ))
+        self._link_chat_media(hits)
         hits.sort(key=lambda h: (-h.score, h.path, h.t_start or 0, h.page or 0))
         return hits
+
+    def _link_chat_media(self, hits: list[Hit]) -> None:
+        """Hubungkan pesan chat <-> file media (voice note/foto/video) yang dikirim di chat itu."""
+        refs = {Path(h.ref.replace("\\", "/")).name.lower() for h in hits if h.ref}
+        media_names = {h.name.lower() for h in hits if h.kind in ("audio", "image", "video")}
+        if not refs and not media_names:
+            return
+        by_name: dict[str, str] = {}
+        if refs:
+            for path, name in self.conn.execute("SELECT path, name FROM files"):
+                if name and name.lower() in refs:
+                    by_name.setdefault(name.lower(), path)
+        ctx: dict[str, str] = {}
+        if media_names:
+            for label, text, ref in self.conn.execute(
+                    "SELECT label, text, ref FROM segments WHERE ref IS NOT NULL "
+                    "AND source IN ('wa_db','chat_export')"):
+                nm = Path(ref.replace("\\", "/")).name.lower()
+                if nm in media_names and nm not in ctx:
+                    ctx[nm] = f"Dikirim di chat: {label}"
+        for h in hits:
+            if h.ref:
+                h.ref_path = by_name.get(Path(h.ref.replace("\\", "/")).name.lower())
+            if h.kind in ("audio", "image", "video"):
+                h.context = ctx.get(h.name.lower())
 
 
 def locate(q_norm: str, text: str, mode: str) -> Optional[tuple[int, int]]:

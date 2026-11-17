@@ -32,7 +32,7 @@ LogCb = Callable[[str], None]
 
 @dataclass
 class ExtractOptions:
-    kinds: set = field(default_factory=lambda: {"document", "image", "audio", "video"})
+    kinds: set = field(default_factory=lambda: {"document", "database", "image", "audio", "video"})
     whisper_model: str = fconfig.WHISPER_DEFAULT_MODEL
     language: Optional[str] = fconfig.WHISPER_LANGUAGE
     frame_interval: float = fconfig.VIDEO_FRAME_INTERVAL
@@ -222,6 +222,12 @@ class CaseProcessor:
             ext = sext or ext
         if kind == "document":
             return extract_document(path, ext, engines, opts.pdf_ocr, should_stop, sub), None
+        if kind == "database":
+            from .chatparse import extract_database
+
+            segs, dbtype = extract_database(path, self.store.case_dir / fconfig.TMP_DIR, should_stop, sub)
+            sub(f"{dbtype}: {len(segs)} pesan/baris teks")
+            return segs, None
         if kind == "image":
             sub("OCR foto")
             return extract_image(path, engines), None
@@ -265,6 +271,8 @@ class CaseProcessor:
             src = fconfig.SOURCE_LABEL.get(s["source"], s["source"])
             lines.append(f"[{src} | {s.get('label') or '-'}]")
             lines.append(s["text"])
+            if s.get("ref"):
+                lines.append(f"(file terkait: {s['ref']})")
             lines.append("")
         (self.store.case_dir / rel).write_text("\n".join(lines), encoding="utf-8")
         return str(rel).replace("\\", "/")

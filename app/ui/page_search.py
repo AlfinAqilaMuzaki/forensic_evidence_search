@@ -74,7 +74,7 @@ class SearchPage(QWidget):
         self.spin_thr.setToolTip("Skor minimal mode fuzzy. Turunkan (mis. 70) untuk rekaman suara yang kurang jelas.")
         self.cmb_kind = QComboBox()
         self.cmb_kind.addItem("SEMUA JENIS FILE", None)
-        for k in ("video", "audio", "image", "document"):
+        for k in ("video", "audio", "image", "document", "database"):
             self.cmb_kind.addItem(fconfig.KIND_LABEL[k].upper(), k)
         f.addWidget(label("Mode", "Muted"))
         f.addWidget(self.cmb_mode)
@@ -135,7 +135,7 @@ class SearchPage(QWidget):
         g.setHorizontalSpacing(10)
         g.setVerticalSpacing(3)
         self.d = {}
-        for i, k in enumerate(("File", "Jenis", "Lokasi", "Path", "SHA-256", "MD5")):
+        for i, k in enumerate(("File", "Jenis", "Lokasi", "Terkait", "Path", "SHA-256", "MD5")):
             g.addWidget(label(k.upper(), "StatCaption"), i, 0, Qt.AlignTop)
             v = label("-", "PathLabel" if k in ("Path", "SHA-256", "MD5") else "", wrap=True)
             v.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -255,6 +255,10 @@ class SearchPage(QWidget):
         self.d["File"].setText(h.name)
         self.d["Jenis"].setText(f"{h.kind_label} — {h.source_label}   (skor {h.score:.0f})")
         self.d["Lokasi"].setText(_loc(h))
+        if h.ref:
+            self.d["Terkait"].setText(f"{h.ref}" + ("  (ada di folder bukti)" if h.ref_path else "  (file tidak ditemukan)"))
+        else:
+            self.d["Terkait"].setText(h.context or "-")
         self.d["Path"].setText(h.path)
         self.d["SHA-256"].setText(h.sha256 or "-")
         self.d["MD5"].setText(h.md5 or "-")
@@ -267,11 +271,20 @@ class SearchPage(QWidget):
         else:
             body = html.escape(t)
         self.text.setHtml(f"<div style='white-space:pre-wrap;font-size:11pt;line-height:140%'>{body}</div>")
-        self.btn_play.setText("PUTAR DI DETIK INI" if h.t_start is not None else "BUKA FILE")
+        if h.ref_path:
+            self.btn_play.setText("BUKA FILE TERKAIT")
+        else:
+            self.btn_play.setText("PUTAR DI DETIK INI" if h.t_start is not None else "BUKA FILE")
 
     def play_or_open(self) -> None:
         h = self._current()
         if not h:
+            return
+        if h.ref_path and os.path.exists(h.ref_path):
+            os.startfile(h.ref_path)  # type: ignore[attr-defined]  # voice note/foto dari pesan chat
+            return
+        if h.kind == "database":
+            subprocess.run(["explorer", "/select,", str(Path(h.path))])
             return
         if not os.path.exists(h.path):
             QMessageBox.warning(self, "File tidak ada", f"File tidak ditemukan:\n{h.path}")

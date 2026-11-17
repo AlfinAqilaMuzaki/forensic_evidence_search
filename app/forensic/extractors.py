@@ -66,6 +66,8 @@ def kind_from_ext(ext: str) -> Optional[str]:
         return "video"
     if ext in fconfig.DOC_EXT:
         return "document"
+    if ext in fconfig.DB_EXT or ext in fconfig.ENCRYPTED_DB_EXT:
+        return "database"
     return None
 
 
@@ -89,6 +91,8 @@ def sniff_kind(path: str) -> tuple[Optional[str], Optional[str]]:
         return "image", ".tif"
     if h.startswith(b"RIFF") and h[8:12] == b"WEBP":
         return "image", ".webp"
+    if h.startswith(b"SQLite format 3\x00"):
+        return "database", ".db"
     if h.startswith(b"%PDF"):
         return "document", ".pdf"
     if h.startswith(b"PK\x03\x04"):
@@ -448,6 +452,13 @@ def extract_document(path: str, ext: str, engines: Engines, ocr_scanned: bool,
         return segs
 
     text = read_text_file(path)
+    if ext == ".txt":
+        from .chatparse import parse_chat_export
+
+        chat = parse_chat_export(text)
+        if chat:
+            sub(f"export chat WhatsApp: {len(chat)} pesan")
+            return chat
     if ext in (".html", ".htm", ".xml"):
         text = strip_markup(text)
     elif ext == ".rtf":

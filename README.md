@@ -20,7 +20,7 @@ modul ini menemukan foto yang sama atau mirip di dalam folder bukti, walaupun fo
 itu sudah di-crop, di-resize, dikompres, di-screenshot, diberi watermark, atau
 diganti namanya.
 
-> **Versi:** 2.1.0 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
+> **Versi:** 2.2.0 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
 > **Mode:** 100% offline (tidak ada data yang dikirim ke internet) &nbsp;•&nbsp;
 > **Pembuat:** Alfin Aqila Muzaki
 
@@ -38,15 +38,15 @@ Di bagian **Assets**, unduh **SEMUA** file installer, lalu simpan **di folder ya
 
 | File | Keterangan |
 |---|---|
-| `CyberForensicEvidenceSearch-Setup-v2.1.0.exe` | Installer (jalankan file ini) |
-| `CyberForensicEvidenceSearch-Setup-v2.1.0-1.bin` | Data installer berisi library & model AI (± 1,6 GB). Wajib diunduh |
+| `CyberForensicEvidenceSearch-Setup-v<versi>.exe` | Installer (jalankan file ini) |
+| `CyberForensicEvidenceSearch-Setup-v<versi>-1.bin` | Data installer berisi library & model AI (± 1,6 GB). Wajib diunduh |
 
 > Installer dipecah menjadi `Setup.exe` + file `.bin` karena GitHub membatasi ukuran
 > per file maksimal 2 GB. Pengguna tetap cukup menjalankan `Setup.exe`, asalkan file
 > `.bin` berada di folder yang sama. Total unduhan ± 1,6 GB.
 
 **2. Instal**
-1. Double-click `CyberForensicEvidenceSearch-Setup-v2.1.0.exe`.
+1. Double-click `CyberForensicEvidenceSearch-Setup-v<versi>.exe`.
 2. Jika muncul layar biru **"Windows protected your PC"** (SmartScreen), klik
    **More info** lalu **Run anyway**. Peringatan ini muncul karena installer belum
    memiliki sertifikat tanda tangan digital berbayar, bukan karena berbahaya.
@@ -159,8 +159,8 @@ melelahkan, dan rawan terlewat.
 
 | Modul | Fungsi |
 |---|---|
-| **01 Ekstraksi Bukti** | Scan seluruh folder bukti, hitung hash SHA-256 + MD5, lalu ekstrak teks: transkrip suara (video & audio), OCR teks di foto dan di frame video, isi dokumen (termasuk OCR PDF scan). Ada statistik live, progres, perkiraan sisa waktu, log, STOP/lanjutkan, dan verifikasi integritas. |
-| **02 Cari Teks** | Cari kalimat di semua hasil ekstraksi dengan tiga mode (Fuzzy, Frasa persis, Semua kata) dan filter jenis file. Panel detail menampilkan pratinjau frame/foto, teks lengkap dengan highlight, path, hash, dan tombol putar di detik temuan. |
+| **01 Ekstraksi Bukti** | Scan seluruh folder bukti, hitung hash SHA-256 + MD5, lalu ekstrak teks: transkrip suara (video & audio), OCR teks di foto dan di frame video, isi dokumen (termasuk OCR PDF scan), serta **pesan chat WhatsApp** dari export chat dan database (`msgstore.db`, `ChatStorage.sqlite`). Ada statistik live, progres, perkiraan sisa waktu, log, STOP/lanjutkan, dan verifikasi integritas. |
+| **02 Cari Teks** | Cari kalimat di semua hasil ekstraksi dengan tiga mode (Fuzzy, Frasa persis, Semua kata) dan filter jenis file. Panel detail menampilkan pratinjau frame/foto, teks lengkap dengan highlight, path, hash, dan tombol putar di detik temuan. Pesan chat menampilkan **tanggal-jam, nama chat, dan pengirim**. Voice note/foto/video menampilkan **di chat mana dan oleh siapa file itu dikirim**. |
 | **03 Cari Foto Mirip** | Index visual sekali per folder bukti, lalu cari dengan foto referensi (pilih atau seret). Ada rincian skor CLIP / pHash / ORB dan penilaian otomatis (foto sama vs mirip). |
 | **Amankan + Laporan** | Untuk hasil teks maupun foto: salinan file asli read-only dengan verifikasi hash, frame, teks, **`laporan.pdf`** dan `laporan.html` (ber-watermark logo + teks transparan, kode verifikasi SHA-256, nomor halaman), `hasil_pencarian.csv`, `manifest_hash.txt`, `manifest_paket.sha256`. |
 | **04 Inventaris & Hash** | Daftar seluruh file bukti: jenis, status, jumlah segmen teks, ukuran, cara deteksi tipe, SHA-256, MD5. Bisa difilter dan di-export ke CSV. |
@@ -175,7 +175,8 @@ melelahkan, dan rawan terlewat.
 | **Video** | mp4, mkv, avi, mov, wmv, flv, webm, 3gp, m4v, mpg, mpeg, ts, mts, vob, ogv | Transkrip suara (Whisper) + OCR teks di layar (frame diambil tiap N detik, frame yang sama dilewati) |
 | **Audio** | mp3, wav, m4a, aac, ogg, **opus (voice note WhatsApp)**, flac, wma, **amr**, aiff | Transkrip suara bertimestamp (Whisper) |
 | **Foto** | jpg, jpeg, jfif, png, bmp, gif, tif, tiff, webp | OCR (EasyOCR, huruf latin / bahasa Indonesia) |
-| **Dokumen** | pdf, docx, doc, xlsx, xls, pptx, ppt, odt, ods, odp, rtf, txt, log, csv, tsv, json, xml, html, md, **eml (email)**, srt, vtt | Pembacaan teks langsung. Halaman PDF hasil scan di-OCR |
+| **Dokumen** | pdf, docx, doc, xlsx, xls, pptx, ppt, odt, ods, odp, rtf, txt, log, csv, tsv, json, xml, html, md, **eml (email)**, srt, vtt | Pembacaan teks langsung. Halaman PDF hasil scan di-OCR. **Export chat WhatsApp (.txt)** dipecah per pesan |
+| **Database / Chat** | db, sqlite, sqlite3, db3 (dan file SQLite tanpa ekstensi): **WhatsApp `msgstore.db`** (Android), **`ChatStorage.sqlite`** (iPhone), database aplikasi lain | Pesan WhatsApp per baris (tanggal, chat, pengirim, isi, media). Database lain: semua kolom teks per baris tabel |
 
 File **tanpa ekstensi atau berekstensi palsu** dikenali dari *signature* (magic
 bytes) isinya, lalu ditandai **"DISAMARKAN"** di Inventaris.
@@ -525,6 +526,44 @@ Menampilkan **seluruh file** di folder bukti: ID, nama, jenis, status
 Di modul 01, **VERIFIKASI INTEGRITAS** menghitung ulang hash semua file bukti dan
 melaporkan jumlah file yang cocok, berubah, dan hilang, sekaligus status rantai audit.
 
+### 8.8 Bukti WhatsApp & aplikasi chat
+
+Arahkan **folder bukti** ke folder hasil ekstraksi ponsel (hasil Cellebrite, Oxygen,
+MOBILedit, Magnet AXIOM, Belkasoft, ADB backup, dll), lalu jalankan ekstraksi seperti biasa.
+Pastikan **Database chat** tercentang di parameter ekstraksi. Aplikasi mengenali sendiri
+jenis setiap file:
+
+| Data dari ponsel | Yang dibaca aplikasi | Lokasi temuan di hasil pencarian |
+|---|---|---|
+| **Export chat** (`WhatsApp Chat dengan X.txt`, `_chat.txt`) format Android & iPhone | Setiap pesan (termasuk pesan multi-baris) | `12/11/26 21.02 • Andi` |
+| **`msgstore.db`** WhatsApp Android (sudah didekripsi), skema baru & lama | Semua pesan teks, caption, dan pesan media. Nama kontak otomatis diambil dari **`wa.db`** bila ada di folder yang sama | `2026-11-12 21:01:00 • Chat: Budi • Dari: Saya (pemilik HP)` |
+| **`ChatStorage.sqlite`** WhatsApp iPhone | Semua pesan teks, caption, dan pesan media, beserta nama chat/grup | `… • Chat: Rudi • Dari: Rudi` |
+| **Media WhatsApp** (`WhatsApp Images/Video/Voice Notes/Documents`) | Foto di-OCR, video & voice note `.opus` ditranskrip, dokumen dibaca | Detik atau halaman |
+| **Database SQLite aplikasi lain** (Telegram, LINE, catatan, browser, dll) | Semua kolom teks per baris tabel | `Tabel notes • baris 2` |
+| **`msgstore.db.crypt14/15`** (masih terenkripsi) | Tidak bisa dibaca tanpa kunci. Ditandai **GAGAL** dengan keterangan "Database WhatsApp TERENKRIPSI" di Inventaris | — |
+
+![Pesan WhatsApp dari database](dokumentasi/11_cari_teks_whatsapp_database.png)
+
+**Media terhubung dengan chat.** Bila pesan di database menyebut file media (misalnya voice
+note `PTT-20261112-WA0003.opus`) dan file itu ada di folder bukti:
+- Hasil pencarian **pesan chat** menampilkan baris **TERKAIT** berisi nama file media, dan
+  tombol **BUKA FILE TERKAIT** langsung memutar atau membuka media itu.
+- Hasil pencarian **voice note/foto/video** menampilkan baris **TERKAIT**:
+  *"Dikirim di chat: 2026-11-12 23:15 • Chat: Budi • Dari: Budi"*.
+
+![Voice note terhubung ke chat](dokumentasi/12_voice_note_terhubung_chat.png)
+
+**Keamanan bukti database.** Database tidak pernah dibuka langsung dari folder bukti.
+File `.db` beserta `-wal`/`-shm`/`-journal` disalin dulu ke folder sementara, lalu salinan
+itu yang dibaca dan kemudian dihapus. Dengan cara ini:
+- Folder bukti tidak tersentuh sama sekali. SQLite biasanya membuat file `-shm`/`-wal`
+  saat membuka database, dan itu tidak terjadi di folder bukti.
+- **Pesan yang masih tersimpan di file `-wal`** (belum dipindahkan ke database utama)
+  **ikut terbaca**.
+
+> Waktu pada pesan database ditampilkan dalam zona waktu komputer pemeriksa
+> (dikonversi dari timestamp asli di database).
+
 ---
 
 ## 9. Cara melihat & membaca hasil
@@ -640,7 +679,7 @@ build_exe.bat
 winget install JRSoftware.InnoSetup     # sekali saja
 build_installer.bat
 ```
-- Hasil di `installer_output\`: `CyberForensicEvidenceSearch-Setup-v2.1.0.exe` (± 4 MB)
+- Hasil di `installer_output\`: `CyberForensicEvidenceSearch-Setup-v<versi>.exe` (± 4 MB)
   dan file `.bin` (± 1,6 GB; dipecah otomatis bila > 2 GB).
 - Installer berbahasa Indonesia, bisa dipasang tanpa hak administrator, membuat ikon
   Desktop dan menu Start, dan terdaftar di *Settings → Apps* untuk uninstall.
@@ -648,7 +687,7 @@ build_installer.bat
 
 **3. Rilis di GitHub**: upload **semua** file di `installer_output\` ke satu GitHub Release.
 ```powershell
-gh release create v2.1.0 installer_output\* --title "Cyber Forensic Evidence Search v2.1.0"
+gh release create v<versi> installer_output\* --title "Cyber Forensic Evidence Search v<versi>"
 ```
 
 Folder `dist\ForensicEvidenceSearch\` juga bisa langsung di-copy ke komputer lain dan
@@ -661,6 +700,7 @@ dijalankan dengan double-click `ForensicEvidenceSearch.exe` (versi portable tanp
 | Perintah | Yang diuji |
 |---|---|
 | `python tests\make_forensic_dataset.py <folder>` | Membuat data uji: kalimat target di DOCX, PDF, PDF scan, TXT, XLSX, screenshot, foto berekstensi palsu, voice note MP3, video (teks di layar + suara), plus file pengecoh |
+| `python tests\make_whatsapp_dataset.py <folder>` + `python tests\validate_whatsapp.py <folder> <hasil> [base\|small]` | Export chat Android/iPhone, `msgstore.db` skema baru & lama + kontak `wa.db`, `ChatStorage.sqlite`, SQLite umum, **isi file `-wal`**, voice note `.opus` terhubung ke chat, `.crypt15` terdeteksi, dan folder bukti tidak berubah (15 pemeriksaan) |
 | `python tests\validate_forensic.py <bukti> <hasil> [base\|small]` | Ekstraksi end-to-end, ketiga mode pencarian, deteksi false positive, pengamanan bukti, verifikasi hash, dan **memastikan folder bukti tidak berubah** |
 | `python tests\scale_test.py <folder> 3000 500000` | Uji skala: ribuan file nyata + ratusan ribu segmen teks |
 | `python tests\validate.py` | Validasi modul foto mirip (8 varian near-duplicate vs 40 distractor) |
@@ -746,9 +786,13 @@ tersentuh. **Arsipkan paket `bukti_diamankan` terlebih dahulu bila masih dibutuh
   dilakukan pemeriksa dengan melihat/mendengar file asli.
 - Teks di layar yang muncul lebih singkat dari interval frame bisa terlewat. Perkecil
   interval bila perlu.
-- File arsip (ZIP/RAR) dan database aplikasi chat (contoh `msgstore.db`) belum dibongkar
-  otomatis. Ekstrak terlebih dahulu dengan tool forensik yang sesuai, lalu arahkan
-  aplikasi ke folder hasilnya.
+- File arsip (ZIP/RAR/TAR) belum dibongkar otomatis. Ekstrak terlebih dahulu, lalu
+  arahkan aplikasi ke folder hasilnya.
+- Database WhatsApp terenkripsi (`.crypt12/14/15`) harus didekripsi dulu dengan kuncinya
+  (file `key` dari ponsel) memakai tool forensik. Setelah itu analisis `msgstore.db`
+  hasil dekripsinya.
+- Database SQLite selain WhatsApp dibaca secara umum (semua kolom teks per baris), tanpa
+  penamaan pengirim/chat khusus. Pembacaan dibatasi 200.000 baris per tabel.
 - Skor kemiripan foto **bukan** bukti identik, hanya untuk mengurutkan kandidat.
 - HEIC/HEIF butuh plugin tambahan (`pillow-heif`).
 
@@ -902,7 +946,7 @@ hanya melihat satu angka gabungan.
 |---|---|
 | **Pembuat** | **Alfin Aqila Muzaki** |
 | **Repository resmi** | <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search> |
-| **Versi** | 2.1.0 |
+| **Versi** | 2.2.0 |
 
 Cyber Forensic Evidence Search dirancang dan dikembangkan oleh **Alfin Aqila Muzaki**.
 Identitas pembuat dan alamat repository resmi ikut tercantum di aplikasi, di setiap
@@ -914,6 +958,6 @@ silakan disampaikan melalui menu **Issues** di repository tersebut.
 
 ---
 
-*Cyber Forensic Evidence Search v2.1.0 — dibuat oleh Alfin Aqila Muzaki —
+*Cyber Forensic Evidence Search v2.2.0 — dibuat oleh Alfin Aqila Muzaki —
 <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search>. Alat bantu forensik
 digital; hasil pengenalan otomatis wajib diverifikasi oleh pemeriksa.*

@@ -60,7 +60,8 @@ CREATE TABLE IF NOT EXISTS segments (
     text TEXT NOT NULL,
     norm TEXT NOT NULL,
     conf REAL,
-    frame_path TEXT            -- cuplikan frame (video) relatif thd folder kasus
+    frame_path TEXT,           -- cuplikan frame (video) relatif thd folder kasus
+    ref TEXT                   -- file media terkait (mis. voice note yang dikirim di chat)
 );
 CREATE INDEX IF NOT EXISTS idx_seg_file ON segments(file_id, seq);
 
@@ -99,6 +100,10 @@ class CaseStore:
         self.conn.execute("PRAGMA journal_mode=WAL;")
         self.conn.execute("PRAGMA synchronous=NORMAL;")
         self.conn.executescript(SCHEMA)
+        # migrasi workspace versi lama: tambah kolom baru bila belum ada
+        seg_cols = [r[1] for r in self.conn.execute("PRAGMA table_info(segments)")]
+        if "ref" not in seg_cols:
+            self.conn.execute("ALTER TABLE segments ADD COLUMN ref TEXT")
         self.conn.commit()
         self._lock = threading.RLock()
 
@@ -227,10 +232,10 @@ class CaseStore:
     def add_segments(self, file_id: int, segs: list[dict]) -> None:
         with self._lock:
             self.conn.executemany(
-                "INSERT INTO segments(file_id, seq, source, t_start, t_end, page, label, text, norm, conf, frame_path) "
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO segments(file_id, seq, source, t_start, t_end, page, label, text, norm, conf, "
+                "frame_path, ref) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
                 [(file_id, i, s["source"], s.get("t_start"), s.get("t_end"), s.get("page"),
-                  s.get("label"), s["text"], s["norm"], s.get("conf"), s.get("frame_path"))
+                  s.get("label"), s["text"], s["norm"], s.get("conf"), s.get("frame_path"), s.get("ref"))
                  for i, s in enumerate(segs)])
 
     def segments_of(self, file_id: int) -> list[dict]:

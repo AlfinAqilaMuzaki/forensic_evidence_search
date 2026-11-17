@@ -48,11 +48,18 @@ VIDEO_EXT = {".mp4", ".mkv", ".avi", ".mov", ".wmv", ".flv", ".webm", ".3gp", ".
 DOC_EXT = {".pdf", ".docx", ".docm", ".doc", ".pptx", ".ppt", ".xlsx", ".xlsm", ".xls",
            ".odt", ".ods", ".odp", ".rtf", ".txt", ".log", ".csv", ".tsv", ".json",
            ".xml", ".html", ".htm", ".md", ".eml", ".srt", ".vtt", ".ini"}
+# Database (SQLite): WhatsApp msgstore.db / ChatStorage.sqlite / database aplikasi lain
+DB_EXT = {".db", ".sqlite", ".sqlite3", ".db3", ".sqlitedb"}
+# Database WhatsApp terenkripsi (butuh kunci; harus didekripsi dulu dengan tool forensik)
+ENCRYPTED_DB_EXT = {".crypt12", ".crypt14", ".crypt15"}
+# Batas pembacaan database umum (non-WhatsApp)
+DB_MAX_ROWS_PER_TABLE = 200_000
+DB_MAX_TOTAL_CHARS = 60_000_000
 
-KIND_LABEL = {"document": "Dokumen", "image": "Foto", "audio": "Audio",
+KIND_LABEL = {"document": "Dokumen", "database": "Database/Chat", "image": "Foto", "audio": "Audio",
               "video": "Video", "other": "Lainnya"}
 # Urutan proses: yang cepat dulu supaya hasil bisa dicari secepatnya.
-KIND_ORDER = {"document": 0, "image": 1, "audio": 2, "video": 3, "other": 9}
+KIND_ORDER = {"document": 0, "database": 1, "image": 2, "audio": 3, "video": 4, "other": 9}
 
 SOURCE_LABEL = {
     "doc": "Teks dokumen",
@@ -60,6 +67,9 @@ SOURCE_LABEL = {
     "img_ocr": "OCR foto",
     "asr": "Transkrip suara",
     "vid_ocr": "OCR frame video",
+    "chat_export": "Pesan chat (export)",
+    "wa_db": "Pesan WhatsApp (database)",
+    "db_text": "Teks database",
 }
 
 # ---------------------------------------------------------------------------

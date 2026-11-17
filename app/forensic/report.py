@@ -102,6 +102,15 @@ def _highlight_html(h: Hit, ctx: int = 220) -> str:
     return html.escape(t[: ctx * 2])
 
 
+def _related_html(h: Hit) -> str:
+    if h.ref:
+        st = "ada di folder bukti" if h.ref_path else "tidak ditemukan di folder bukti"
+        return f"<div class=mono style='margin-top:4px'>File terkait: {html.escape(h.ref)} ({st})</div>"
+    if h.context:
+        return f"<div style='margin-top:4px;color:#0b2f66'><i>{html.escape(h.context)}</i></div>"
+    return ""
+
+
 def _meta_rows(info: dict, extra: list[tuple[str, str]]) -> str:
     e = html.escape
     rows = [("Folder bukti", info.get("evidence_dir", "")),
@@ -175,11 +184,13 @@ def secure_hits(store: CaseStore, hits: list[Hit], query: str, mode: str, copy_f
     with open(out / "hasil_pencarian.csv", "w", newline="", encoding="utf-8-sig") as fh:
         w = csv.writer(fh)
         w.writerow(["No", "Skor", "Jenis File", "Sumber Teks", "Lokasi (halaman/waktu)", "Kutipan Teks",
-                    "Path Asli", "SHA-256", "MD5", "Salinan Bukti", "Hash Salinan Cocok", "Cuplikan Frame"])
+                    "Path Asli", "SHA-256", "MD5", "Salinan Bukti", "Hash Salinan Cocok", "Cuplikan Frame",
+                    "File Terkait / Konteks Chat"])
         for i, h, ent, frame_rel in rows:
             w.writerow([i, f"{h.score:.1f}", h.kind_label, h.source_label, _location(h), h.text,
                         h.path, h.sha256, h.md5, ent["copy"].name if ent["copy"] else "",
-                        {True: "YA", False: "TIDAK", None: "-"}[ent["verified"]], frame_rel])
+                        {True: "YA", False: "TIDAK", None: "-"}[ent["verified"]], frame_rel,
+                        h.ref or h.context or ""])
 
     _write_manifest(out, info, f"Pencarian teks: \"{query}\" (mode {mode})",
                     [(ent["no"], ent["rec"]["path"], ent["rec"]["size"], ent["rec"]["sha256"],
@@ -195,7 +206,7 @@ def secure_hits(store: CaseStore, hits: list[Hit], query: str, mode: str, copy_f
             f"<tr><td>{i}</td><td>{h.score:.0f}</td>"
             f"<td><b>{e(h.name)}</b><br>{e(h.kind_label)} - {e(h.source_label)}"
             f"<div class=mono>{e(h.path)}<br>SHA-256: {e(h.sha256)}</div></td>"
-            f"<td>{e(_location(h))}</td><td>{_highlight_html(h)}</td><td>{img}</td></tr>")
+            f"<td>{e(_location(h))}</td><td>{_highlight_html(h)}{_related_html(h)}</td><td>{img}</td></tr>")
     body.append("</table>")
     _write_html(out, "LAPORAN TEMUAN PENCARIAN TEKS", info,
                 [("*Kalimat dicari", f"<b>\"{e(query)}\"</b> ({e(mode_txt.get(mode, mode))})"),

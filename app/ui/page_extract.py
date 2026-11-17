@@ -62,6 +62,7 @@ class ExtractPage(QWidget):
             "audio": StatCard("Audio", "audio"),
             "image": StatCard("Foto", "image"),
             "document": StatCard("Dokumen", "doc"),
+            "database": StatCard("Database/Chat", "chip"),
             "done": StatCard("Selesai", "check", "ok"),
             "pending": StatCard("Antrian", "clock", "warn"),
             "error": StatCard("Gagal", "error", "bad"),
@@ -69,7 +70,7 @@ class ExtractPage(QWidget):
             "mismatch": StatCard("Ekstensi disamarkan", "warn", "warn"),
         }
         for i, w in enumerate(self.stats.values()):
-            grid.addWidget(w, i // 5, i % 5)
+            grid.addWidget(w, i // 6, i % 6)
         root.addLayout(grid)
 
         mid = QHBoxLayout()
@@ -81,7 +82,8 @@ class ExtractPage(QWidget):
         g.setHorizontalSpacing(14)
         g.setVerticalSpacing(8)
         self.chk = {}
-        for i, (k, txt) in enumerate((("document", "Dokumen  (PDF, Word, Excel, PPT, TXT, Email)"),
+        for i, (k, txt) in enumerate((("document", "Dokumen  (PDF, Word, Excel, PPT, TXT, Email, export chat)"),
+                                      ("database", "Database chat  (WhatsApp msgstore.db / ChatStorage.sqlite, SQLite)"),
                                       ("image", "Foto  (OCR teks dalam gambar)"),
                                       ("audio", "Audio  (transkrip suara → teks)"),
                                       ("video", "Video"))):
@@ -98,7 +100,7 @@ class ExtractPage(QWidget):
             c.setChecked(True)
             vrow.addWidget(c)
         vrow.addStretch(1)
-        g.addLayout(vrow, 4, 0, 1, 2)
+        g.addLayout(vrow, 5, 0, 1, 2)
         self.chk["video"].toggled.connect(lambda on: (self.chk_vid_asr.setEnabled(on), self.chk_vid_ocr.setEnabled(on)))
 
         self.cmb_model = QComboBox()
@@ -119,10 +121,10 @@ class ExtractPage(QWidget):
         rows = (("Model transkrip", self.cmb_model), ("Bahasa suara", self.cmb_lang),
                 ("Ambil frame video tiap", self.spin_interval))
         for i, (t, w) in enumerate(rows):
-            g.addWidget(label(t, "Muted"), 5 + i, 0)
-            g.addWidget(w, 5 + i, 1)
-        g.addWidget(self.chk_pdf_ocr, 8, 0, 1, 2)
-        g.addWidget(self.chk_retry, 9, 0, 1, 2)
+            g.addWidget(label(t, "Muted"), 6 + i, 0)
+            g.addWidget(w, 6 + i, 1)
+        g.addWidget(self.chk_pdf_ocr, 9, 0, 1, 2)
+        g.addWidget(self.chk_retry, 10, 0, 1, 2)
         g.setColumnStretch(1, 1)
         pc.body.addLayout(g)
         pc.body.addStretch(1)
@@ -202,7 +204,7 @@ class ExtractPage(QWidget):
         finally:
             conn.close()
         self.stats["total"].set(sum(by_kind.values()))
-        for k in ("video", "audio", "image", "document"):
+        for k in ("video", "audio", "image", "document", "database"):
             self.stats[k].set(by_kind.get(k, 0))
         self.stats["done"].set(by_st.get("done", 0))
         self.stats["pending"].set(by_st.get("pending", 0) + by_st.get("processing", 0))

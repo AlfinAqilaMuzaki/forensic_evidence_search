@@ -66,7 +66,7 @@ class InventoryPage(QWidget):
         self.filter.textChanged.connect(self._apply)
         self.cmb_kind = QComboBox()
         self.cmb_kind.addItem("SEMUA JENIS", None)
-        for k in ("video", "audio", "image", "document", "other"):
+        for k in ("video", "audio", "image", "document", "database", "other"):
             self.cmb_kind.addItem(fconfig.KIND_LABEL[k].upper(), k)
         self.cmb_kind.currentIndexChanged.connect(self._apply)
         self.cmb_st = QComboBox()
