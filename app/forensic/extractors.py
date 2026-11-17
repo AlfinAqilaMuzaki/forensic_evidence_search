@@ -93,6 +93,8 @@ def sniff_kind(path: str) -> tuple[Optional[str], Optional[str]]:
         return "image", ".webp"
     if h.startswith(b"SQLite format 3\x00"):
         return "database", ".db"
+    if h.startswith(b"window.YTD."):
+        return "document", ".js"   # arsip Twitter/X (data/*.js)
     if h.startswith(b"%PDF"):
         return "document", ".pdf"
     if h.startswith(b"PK\x03\x04"):
@@ -452,6 +454,20 @@ def extract_document(path: str, ext: str, engines: Engines, ocr_scanned: bool,
         return segs
 
     text = read_text_file(path)
+    if ext in (".json", ".js", ".html", ".htm", ".xml", ".csv", ".tsv"):
+        from .social import parse_social_file
+
+        try:
+            social = parse_social_file(path, ext, text)
+        except Exception as exc:  # noqa: BLE001 - format tak terduga: jatuh ke pembacaan biasa
+            logger.warning("Parser media sosial gagal untuk %s: %s", path, exc)
+            social = None
+        if social:
+            plats = sorted({s_["source"] for s_ in social})
+            sub(f"{', '.join(plats)}: {len(social)} pesan/postingan")
+            if plats != ["social"]:
+                return social
+            segs.extend(social)  # format umum: tetap simpan juga teks lengkap file (tidak ada yang hilang)
     if ext == ".txt":
         from .chatparse import parse_chat_export
 

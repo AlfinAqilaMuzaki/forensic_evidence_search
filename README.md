@@ -20,7 +20,7 @@ modul ini menemukan foto yang sama atau mirip di dalam folder bukti, walaupun fo
 itu sudah di-crop, di-resize, dikompres, di-screenshot, diberi watermark, atau
 diganti namanya.
 
-> **Versi:** 2.2.0 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
+> **Versi:** 2.3.0 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
 > **Mode:** 100% offline (tidak ada data yang dikirim ke internet) &nbsp;•&nbsp;
 > **Pembuat:** Alfin Aqila Muzaki
 
@@ -159,7 +159,7 @@ melelahkan, dan rawan terlewat.
 
 | Modul | Fungsi |
 |---|---|
-| **01 Ekstraksi Bukti** | Scan seluruh folder bukti, hitung hash SHA-256 + MD5, lalu ekstrak teks: transkrip suara (video & audio), OCR teks di foto dan di frame video, isi dokumen (termasuk OCR PDF scan), serta **pesan chat WhatsApp** dari export chat dan database (`msgstore.db`, `ChatStorage.sqlite`). Ada statistik live, progres, perkiraan sisa waktu, log, STOP/lanjutkan, dan verifikasi integritas. |
+| **01 Ekstraksi Bukti** | Scan seluruh folder bukti, hitung hash SHA-256 + MD5, lalu ekstrak teks: transkrip suara (video & audio), OCR teks di foto dan di frame video, isi dokumen (termasuk OCR PDF scan), serta **pesan chat & media sosial**: WhatsApp, Telegram, Facebook, Messenger, Instagram, Threads, Twitter/X, Discord, TikTok, Snapchat, LINE, Skype, Google Chat, LinkedIn, SMS, dan iMessage (dari export akun maupun database aplikasi di HP). Ada statistik live, progres, perkiraan sisa waktu, log, STOP/lanjutkan, dan verifikasi integritas. |
 | **02 Cari Teks** | Cari kalimat di semua hasil ekstraksi dengan tiga mode (Fuzzy, Frasa persis, Semua kata) dan filter jenis file. Panel detail menampilkan pratinjau frame/foto, teks lengkap dengan highlight, path, hash, dan tombol putar di detik temuan. Pesan chat menampilkan **tanggal-jam, nama chat, dan pengirim**. Voice note/foto/video menampilkan **di chat mana dan oleh siapa file itu dikirim**. |
 | **03 Cari Foto Mirip** | Index visual sekali per folder bukti, lalu cari dengan foto referensi (pilih atau seret). Ada rincian skor CLIP / pHash / ORB dan penilaian otomatis (foto sama vs mirip). |
 | **Amankan + Laporan** | Untuk hasil teks maupun foto: salinan file asli read-only dengan verifikasi hash, frame, teks, **`laporan.pdf`** dan `laporan.html` (ber-watermark logo + teks transparan, kode verifikasi SHA-256, nomor halaman), `hasil_pencarian.csv`, `manifest_hash.txt`, `manifest_paket.sha256`. |
@@ -176,7 +176,8 @@ melelahkan, dan rawan terlewat.
 | **Audio** | mp3, wav, m4a, aac, ogg, **opus (voice note WhatsApp)**, flac, wma, **amr**, aiff | Transkrip suara bertimestamp (Whisper) |
 | **Foto** | jpg, jpeg, jfif, png, bmp, gif, tif, tiff, webp | OCR (EasyOCR, huruf latin / bahasa Indonesia) |
 | **Dokumen** | pdf, docx, doc, xlsx, xls, pptx, ppt, odt, ods, odp, rtf, txt, log, csv, tsv, json, xml, html, md, **eml (email)**, srt, vtt | Pembacaan teks langsung. Halaman PDF hasil scan di-OCR. **Export chat WhatsApp (.txt)** dipecah per pesan |
-| **Database / Chat** | db, sqlite, sqlite3, db3 (dan file SQLite tanpa ekstensi): **WhatsApp `msgstore.db`** (Android), **`ChatStorage.sqlite`** (iPhone), database aplikasi lain | Pesan WhatsApp per baris (tanggal, chat, pengirim, isi, media). Database lain: semua kolom teks per baris tabel |
+| **Export media sosial** | json, html, csv, xml, js (Twitter/X) dari "Download your information" / "Export chat" | Dikenali otomatis per platform, lalu dipecah per pesan/postingan/komentar (lihat [8.9](#89-media-sosial--aplikasi-pesan-lain)) |
+| **Database / Chat** | db, sqlite, sqlite3, db3 (dan file SQLite tanpa ekstensi): WhatsApp `msgstore.db` & `ChatStorage.sqlite`, Telegram `cache4.db`, Messenger `threads_db2`, Instagram `direct.db`, LINE `naver_line`, SMS `mmssms.db`, iMessage `sms.db`, database aplikasi lain | Pesan per baris (tanggal, chat, pengirim, isi, media). Database lain: semua kolom teks per baris tabel, termasuk teks di dalam kolom biner (BLOB) |
 
 File **tanpa ekstensi atau berekstensi palsu** dikenali dari *signature* (magic
 bytes) isinya, lalu ditandai **"DISAMARKAN"** di Inventaris.
@@ -564,6 +565,51 @@ itu yang dibaca dan kemudian dihapus. Dengan cara ini:
 > Waktu pada pesan database ditampilkan dalam zona waktu komputer pemeriksa
 > (dikonversi dari timestamp asli di database).
 
+### 8.9 Media sosial & aplikasi pesan lain
+
+Cara pakainya sama: masukkan data ke folder bukti, lalu jalankan ekstraksi. Aplikasi
+**mengenali platformnya sendiri** dari isi dan struktur file. Kolom **SUMBER TEKS** di
+hasil pencarian menunjukkan nama platformnya (Telegram, Instagram, Discord, dst), dan
+kolom **LOKASI** berisi `Platform • waktu • Chat • Dari`.
+
+![Hasil pencarian dari berbagai media sosial](dokumentasi/13_cari_teks_media_sosial.png)
+
+**A. Export akun** (data dari fitur "Download your information" / "Export chat" / arsip akun,
+misalnya hasil permintaan data ke platform atau dari perangkat pemilik akun):
+
+| Platform | File yang dibaca | Yang diekstrak |
+|---|---|---|
+| **Facebook & Messenger** | `messages/inbox/*/message_N.json`, export Messenger terenkripsi end-to-end (`*.json`) | Pesan per percakapan: pengirim, waktu, isi, tautan, foto/video/audio |
+| **Instagram** | `your_instagram_activity/messages/inbox/*/message_N.json`, komentar, postingan | Pesan DM, komentar, caption |
+| **Threads** | `threads/threads_and_replies.json` | Postingan & balasan |
+| **Telegram** (Desktop) | `result.json` (format JSON) dan `messages.html` (format HTML) | Pesan per chat/grup: pengirim, waktu, isi, media |
+| **Twitter / X** | arsip `data/tweets.js`, `direct-messages.js`, `like.js`, dll | Tweet, DM (dengan ID pengirim), like |
+| **Discord** | data package `messages/c*/messages.json` atau `.csv` + `channel.json`; DiscordChatExporter (`.json`) | Pesan per server/channel/DM |
+| **TikTok** | `user_data_tiktok.json` / `user_data.json` | Riwayat DM per lawan bicara |
+| **Snapchat** | `json/chat_history.json` | Riwayat chat |
+| **Skype** | `messages.json` | Pesan per percakapan |
+| **Google Chat / Hangouts** | `Google Chat/Groups/*/messages.json` | Pesan per grup/DM |
+| **LinkedIn** | `messages.csv` | Pesan per percakapan |
+| **SMS & panggilan** | backup *SMS Backup & Restore* (`sms-*.xml`, `calls-*.xml`) | SMS, MMS, log panggilan (nomor, nama kontak, durasi) |
+
+> Saat meminta/mengunduh data dari Facebook, Instagram, atau Threads, pilih format **JSON**
+> (bukan HTML) agar pesan terbaca per pengirim dan waktu. Kesalahan encoding khas export
+> Meta (emoji/huruf beraksen jadi karakter aneh) diperbaiki otomatis.
+
+**B. Database aplikasi dari ekstraksi HP** (hasil Cellebrite, Oxygen, MOBILedit, AXIOM, dll):
+
+| Aplikasi | File database | Yang diekstrak |
+|---|---|---|
+| WhatsApp | `msgstore.db` (+ `wa.db`), `ChatStorage.sqlite` | Lihat [8.8](#88-bukti-whatsapp--aplikasi-chat) |
+| Telegram Android | `org.telegram.messenger/files/cache4.db` | Teks pesan (dari kolom biner), nama chat, waktu, pesan keluar/masuk |
+| Facebook Messenger Android | `com.facebook.orca/databases/threads_db2` | Pesan, nama pengirim, waktu, percakapan |
+| Instagram Android | `com.instagram.android/databases/direct.db` | Pesan DM, judul percakapan, waktu |
+| LINE | `jp.naver.line.android/databases/naver_line` | Pesan, nama kontak, waktu |
+| SMS Android | `com.android.providers.telephony/databases/mmssms.db` | SMS masuk/keluar |
+| iMessage / SMS iPhone | `Library/SMS/sms.db` | Pesan (termasuk teks di `attributedBody` iOS terbaru), nomor, waktu |
+| Aplikasi lain (Discord, TikTok, Snapchat, browser, dll) | database SQLite apa pun | Semua teks per baris tabel, termasuk teks di kolom biner. Nama aplikasi dikenali dari path folder |
+| Signal, WeChat, Telegram iPhone | database terenkripsi SQLCipher | Tidak bisa dibaca tanpa kunci. Ditandai **GAGAL – TERENKRIPSI** di Inventaris |
+
 ---
 
 ## 9. Cara melihat & membaca hasil
@@ -700,7 +746,8 @@ dijalankan dengan double-click `ForensicEvidenceSearch.exe` (versi portable tanp
 | Perintah | Yang diuji |
 |---|---|
 | `python tests\make_forensic_dataset.py <folder>` | Membuat data uji: kalimat target di DOCX, PDF, PDF scan, TXT, XLSX, screenshot, foto berekstensi palsu, voice note MP3, video (teks di layar + suara), plus file pengecoh |
-| `python tests\make_whatsapp_dataset.py <folder>` + `python tests\validate_whatsapp.py <folder> <hasil> [base\|small]` | Export chat Android/iPhone, `msgstore.db` skema baru & lama + kontak `wa.db`, `ChatStorage.sqlite`, SQLite umum, **isi file `-wal`**, voice note `.opus` terhubung ke chat, `.crypt15` terdeteksi, dan folder bukti tidak berubah (15 pemeriksaan) |
+| `python tests\make_whatsapp_dataset.py <folder>` + `python tests\validate_whatsapp.py <folder> <hasil> [base\|small]` | Export chat Android/iPhone, `msgstore.db` skema baru & lama + kontak `wa.db`, `ChatStorage.sqlite`, SQLite umum, **isi file `-wal`**, voice note `.opus` terhubung ke chat, `.crypt15` terdeteksi, dan folder bukti tidak berubah (15 pemeriksaan; jalankan dengan model `small`) |
+| `python tests\make_social_dataset.py <folder>` + `python tests\validate_social.py <folder> <hasil>` | 25 sumber dari 15 platform (export akun & database HP), perbaikan encoding Meta, Signal terenkripsi terdeteksi, file pengecoh tidak muncul, folder bukti tidak berubah |
 | `python tests\validate_forensic.py <bukti> <hasil> [base\|small]` | Ekstraksi end-to-end, ketiga mode pencarian, deteksi false positive, pengamanan bukti, verifikasi hash, dan **memastikan folder bukti tidak berubah** |
 | `python tests\scale_test.py <folder> 3000 500000` | Uji skala: ribuan file nyata + ratusan ribu segmen teks |
 | `python tests\validate.py` | Validasi modul foto mirip (8 varian near-duplicate vs 40 distractor) |
@@ -791,8 +838,13 @@ tersentuh. **Arsipkan paket `bukti_diamankan` terlebih dahulu bila masih dibutuh
 - Database WhatsApp terenkripsi (`.crypt12/14/15`) harus didekripsi dulu dengan kuncinya
   (file `key` dari ponsel) memakai tool forensik. Setelah itu analisis `msgstore.db`
   hasil dekripsinya.
-- Database SQLite selain WhatsApp dibaca secara umum (semua kolom teks per baris), tanpa
-  penamaan pengirim/chat khusus. Pembacaan dibatasi 200.000 baris per tabel.
+- Database aplikasi yang belum punya pembaca khusus dibaca secara umum (semua teks per
+  baris tabel), tanpa penamaan pengirim/chat. Pembacaan dibatasi 200.000 baris per tabel.
+- Signal, WeChat, dan Telegram iPhone mengenkripsi database-nya (SQLCipher), sehingga harus
+  didekripsi dulu dengan tool forensik yang memiliki kuncinya.
+- Struktur export dan database media sosial bisa berubah ketika platform memperbarui
+  aplikasinya. Pembaca di aplikasi ini mengikuti struktur yang umum dipakai. Jika suatu
+  versi tidak terbaca dengan rapi, isinya tetap bisa dicari lewat pembaca umum.
 - Skor kemiripan foto **bukan** bukti identik, hanya untuk mengurutkan kandidat.
 - HEIC/HEIF butuh plugin tambahan (`pillow-heif`).
 
@@ -946,7 +998,7 @@ hanya melihat satu angka gabungan.
 |---|---|
 | **Pembuat** | **Alfin Aqila Muzaki** |
 | **Repository resmi** | <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search> |
-| **Versi** | 2.2.0 |
+| **Versi** | 2.3.0 |
 
 Cyber Forensic Evidence Search dirancang dan dikembangkan oleh **Alfin Aqila Muzaki**.
 Identitas pembuat dan alamat repository resmi ikut tercantum di aplikasi, di setiap
@@ -958,6 +1010,6 @@ silakan disampaikan melalui menu **Issues** di repository tersebut.
 
 ---
 
-*Cyber Forensic Evidence Search v2.2.0 — dibuat oleh Alfin Aqila Muzaki —
+*Cyber Forensic Evidence Search v2.3.0 — dibuat oleh Alfin Aqila Muzaki —
 <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search>. Alat bantu forensik
 digital; hasil pengenalan otomatis wajib diverifikasi oleh pemeriksa.*

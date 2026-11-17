@@ -82,8 +82,8 @@ class ExtractPage(QWidget):
         g.setHorizontalSpacing(14)
         g.setVerticalSpacing(8)
         self.chk = {}
-        for i, (k, txt) in enumerate((("document", "Dokumen  (PDF, Word, Excel, PPT, TXT, Email, export chat)"),
-                                      ("database", "Database chat  (WhatsApp msgstore.db / ChatStorage.sqlite, SQLite)"),
+        for i, (k, txt) in enumerate((("document", "Dokumen & export medsos  (PDF, Office, TXT, Email, JSON/HTML/CSV export akun)"),
+                                      ("database", "Database aplikasi HP  (WhatsApp, Telegram, Messenger, Instagram, LINE, SMS, iMessage, SQLite)"),
                                       ("image", "Foto  (OCR teks dalam gambar)"),
                                       ("audio", "Audio  (transkrip suara → teks)"),
                                       ("video", "Video"))):

@@ -47,7 +47,7 @@ class SearchPage(QWidget):
         root.setContentsMargins(18, 14, 18, 14)
         root.setSpacing(12)
         root.addWidget(page_header("PENCARIAN TEKS LINTAS BUKTI",
-                                   "Cari kalimat di ucapan (video/audio), teks di layar/foto, dan isi dokumen sekaligus"))
+                                   "Cari kalimat di ucapan (video/audio), teks di layar/foto, dokumen, chat & media sosial sekaligus"))
 
         sc = Card()
         r = QHBoxLayout()

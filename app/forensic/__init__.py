@@ -3,6 +3,6 @@ seluruh isi folder barang bukti, penyimpanan terkunci-hash, dan pencarian
 kalimat di semua video/foto/audio/dokumen sekaligus."""
 
 TOOL_NAME = "Cyber Forensic Evidence Search"
-TOOL_VERSION = "2.2.0"
+TOOL_VERSION = "2.3.0"
 AUTHOR = "Alfin Aqila Muzaki"
 REPO_URL = "https://github.com/AlfinAqilaMuzaki/forensic_evidence_search"

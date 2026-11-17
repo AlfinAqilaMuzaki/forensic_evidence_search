@@ -204,9 +204,10 @@ class TextSearcher:
                     by_name.setdefault(name.lower(), path)
         ctx: dict[str, str] = {}
         if media_names:
-            for label, text, ref in self.conn.execute(
-                    "SELECT label, text, ref FROM segments WHERE ref IS NOT NULL "
-                    "AND source IN ('wa_db','chat_export')"):
+            for label, text, ref, source in self.conn.execute(
+                    "SELECT label, text, ref, source FROM segments WHERE ref IS NOT NULL"):
+                if source not in fconfig.CHAT_SOURCES:
+                    continue
                 nm = Path(ref.replace("\\", "/")).name.lower()
                 if nm in media_names and nm not in ctx:
                     ctx[nm] = f"Dikirim di chat: {label}"

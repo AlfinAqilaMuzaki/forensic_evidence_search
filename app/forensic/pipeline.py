@@ -107,7 +107,10 @@ class CaseProcessor:
                 mismatch = 0
                 sk, sext = sniff_kind(full)
                 if kind is None and sk is not None:
-                    kind, detected_by, mismatch = sk, "signature", 1
+                    # Tanpa ekstensi (umum utk database aplikasi Android) atau ekstensi = tipe
+                    # sebenarnya (.js arsip Twitter) BUKAN penyamaran; ekstensi lain = disamarkan.
+                    disguised = bool(ext) and ext != sext and not (sk == "database" and ext in fconfig.DB_EXT)
+                    kind, detected_by, mismatch = sk, "signature", int(disguised)
                 elif kind is not None and sk is not None and sk != kind:
                     # isi file tidak sesuai ekstensinya (indikasi penyamaran)
                     kind, detected_by, mismatch = sk, "signature", 1

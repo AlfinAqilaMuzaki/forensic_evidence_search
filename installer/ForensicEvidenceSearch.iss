@@ -9,7 +9,7 @@
 ; ============================================================================
 
 #define AppName      "Cyber Forensic Evidence Search"
-#define AppVersion   "2.2.0"
+#define AppVersion   "2.3.0"
 #define AppPublisher "Alfin Aqila Muzaki"
 #define AppURL       "https://github.com/AlfinAqilaMuzaki/forensic_evidence_search"
 #define AppExe       "ForensicEvidenceSearch.exe"

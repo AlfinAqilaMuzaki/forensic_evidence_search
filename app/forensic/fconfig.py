@@ -71,6 +71,15 @@ SOURCE_LABEL = {
     "wa_db": "Pesan WhatsApp (database)",
     "db_text": "Teks database",
 }
+# Sumber per platform media sosial / aplikasi pesan (lihat social.PLATFORM_LABEL)
+_PLATFORMS = {"facebook": "Facebook", "messenger": "Messenger", "instagram": "Instagram", "threads": "Threads",
+              "telegram": "Telegram", "twitter": "Twitter/X", "discord": "Discord", "tiktok": "TikTok",
+              "snapchat": "Snapchat", "skype": "Skype", "gchat": "Google Chat", "linkedin": "LinkedIn",
+              "sms": "SMS/Telepon", "line": "LINE", "imessage": "iMessage/SMS", "signal": "Signal",
+              "wechat": "WeChat", "social": "Media sosial (umum)"}
+SOURCE_LABEL.update(_PLATFORMS)
+# Sumber yang berupa pesan chat (dipakai untuk menghubungkan media <-> pesan)
+CHAT_SOURCES = {"wa_db", "chat_export", *_PLATFORMS}
 
 # ---------------------------------------------------------------------------
 # Parameter ekstraksi

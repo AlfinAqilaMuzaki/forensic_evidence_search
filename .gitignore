@@ -45,3 +45,4 @@ Thumbs.db
 installer_output/
 _tmp_build/
 tests/_whatsapp_dataset/
+tests/_social_dataset/
