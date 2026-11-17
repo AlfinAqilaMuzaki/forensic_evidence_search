@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 import time
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtWidgets import (
     QCheckBox, QComboBox, QDoubleSpinBox, QGridLayout, QHBoxLayout, QMessageBox, QPlainTextEdit,
     QProgressBar, QVBoxLayout, QWidget,
@@ -29,6 +29,8 @@ def page_header(title: str, sub: str) -> QWidget:
 
 
 class ExtractPage(QWidget):
+    restart_requested = Signal()
+
     def __init__(self, state: AppState):
         super().__init__()
         self.setObjectName("Page")
@@ -82,8 +84,8 @@ class ExtractPage(QWidget):
         g.setHorizontalSpacing(14)
         g.setVerticalSpacing(8)
         self.chk = {}
-        for i, (k, txt) in enumerate((("document", "Dokumen & export medsos  (PDF, Office, TXT, Email, JSON/HTML/CSV export akun)"),
-                                      ("database", "Database aplikasi HP  (WhatsApp, Telegram, Messenger, Instagram, LINE, SMS, iMessage, SQLite)"),
+        for i, (k, txt) in enumerate((("document", "Dokumen && export medsos  (PDF, Office, TXT, Email, export akun JSON/HTML/CSV)"),
+                                      ("database", "Database aplikasi HP  (WhatsApp, Telegram, Messenger, Instagram, LINE, SMS…)"),
                                       ("image", "Foto  (OCR teks dalam gambar)"),
                                       ("audio", "Audio  (transkrip suara → teks)"),
                                       ("video", "Video"))):
@@ -132,7 +134,8 @@ class ExtractPage(QWidget):
 
         # --- status proses
         sc = Card("Status proses", "scan")
-        self.phase = label("SIAP — pilih folder barang bukti lalu tekan MULAI", "CardHint", wrap=True)
+        self.phase = label("ANALISIS BARU — pilih FOLDER BUKTI di atas, atau buka analisis lama lewat RIWAYAT",
+                           "CardHint", wrap=True)
         sc.body.addWidget(self.phase)
         self.progress = QProgressBar()
         self.progress.setFormat("%p%")
@@ -167,8 +170,15 @@ class ExtractPage(QWidget):
         self.btn_verify.clicked.connect(self.verify)
         self.btn_open = button("BUKA FOLDER DATA", "open", "", "Folder hasil ekstraksi, frame, & bukti diamankan")
         self.btn_open.clicked.connect(lambda: self.state.workspace and os.startfile(str(self.state.workspace)))
+        self.btn_restart = button("ULANG DARI AWAL", "refresh", "Danger",
+                                  "Proses ulang folder ini dari nol; hasil lama diarsipkan (tidak dihapus)")
+        self.btn_restart.clicked.connect(self.restart_requested.emit)
         b2.addWidget(self.btn_verify)
         b2.addWidget(self.btn_open)
+        sc.body.addLayout(b2)
+        b2 = QHBoxLayout()
+        b2.addStretch(1)
+        b2.addWidget(self.btn_restart)
         sc.body.addLayout(b2)
         mid.addWidget(sc, 6)
         root.addLayout(mid)
@@ -186,6 +196,14 @@ class ExtractPage(QWidget):
         self.console.appendPlainText(f"[{time.strftime('%H:%M:%S')}] {m}")
 
     def _on_evidence(self) -> None:
+        self.progress.setValue(0)
+        self.cur_file.setText("-")
+        self.lbl_count.setText("0 / 0 file")
+        self.lbl_eta.setText("Sisa waktu: -")
+        self.lbl_elapsed.setText("Berjalan: -")
+        if not self.state.evidence_dir:
+            self.phase.setText("ANALISIS BARU — pilih FOLDER BUKTI di atas, atau buka analisis lama lewat RIWAYAT")
+            return
         self.log(f"Folder bukti aktif: {self.state.evidence_dir}")
         self.log(f"Data hasil analisis: {self.state.workspace}")
         self.phase.setText("SIAP — tekan MULAI / LANJUTKAN EKSTRAKSI")
@@ -215,6 +233,7 @@ class ExtractPage(QWidget):
     def _on_busy(self, busy: bool) -> None:
         self.btn_start.setEnabled(not busy)
         self.btn_verify.setEnabled(not busy)
+        self.btn_restart.setEnabled(not busy)
         self.btn_stop.setEnabled(busy)
         if busy:
             self._t_start = time.time()

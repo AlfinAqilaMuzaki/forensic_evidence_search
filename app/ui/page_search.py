@@ -172,6 +172,7 @@ class SearchPage(QWidget):
         self.hits = []
         self.model.set_rows([])
         self.summary.setText("")
+        self._clear_detail()
 
     def _on_busy(self, b: bool) -> None:
         self.btn_search.setEnabled(not b)

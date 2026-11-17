@@ -39,6 +39,30 @@ class AppState(QObject):
         self.data_changed.emit()
         return None
 
+    def clear_evidence(self) -> None:
+        """Tutup analisis aktif (data tetap tersimpan) -> tampilan kosong untuk analisis baru."""
+        if self.store:
+            self.store.close()
+        self.store = None
+        self.evidence_dir = None
+        self.workspace = None
+        self.evidence_changed.emit()   # halaman menutup koneksi DB & mengosongkan tampilan
+        self.data_changed.emit()
+
+    def restart_current(self) -> Optional[Path]:
+        """Ulang analisis folder bukti aktif dari nol. Data lama DIARSIPKAN (tidak dihapus)."""
+        from .history import archive_workspace
+
+        if not self.evidence_dir or not self.workspace:
+            return None
+        ev, ws = self.evidence_dir, self.workspace
+        self.clear_evidence()
+        archived = archive_workspace(ws) if ws.exists() else None
+        self.set_evidence(ev)
+        if self.store and archived:
+            self.store.audit("ULANG_DARI_AWAL", f"analisis sebelumnya diarsipkan ke {archived}")
+        return archived
+
     def last_evidence(self) -> str:
         return str(QSettings("CyberForensic", "EvidenceSearch").value("last_evidence", "") or "")
 

@@ -220,6 +220,11 @@ class PhotoPage(QWidget):
     def refresh_index_info(self) -> None:
         d = self.index_dir
         if not d:
+            self.idx_count.setText("-")
+            self.idx_loc.setText("-")
+            self.idx_status.setText("Pilih folder bukti terlebih dahulu.")
+            self.idx_prog.setValue(0)
+            self.res_summary.setText("")
             return
         self.idx_loc.setText(str(d))
         db = d / config.DB_FILENAME

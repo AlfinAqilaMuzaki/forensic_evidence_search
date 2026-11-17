@@ -20,7 +20,7 @@ modul ini menemukan foto yang sama atau mirip di dalam folder bukti, walaupun fo
 itu sudah di-crop, di-resize, dikompres, di-screenshot, diberi watermark, atau
 diganti namanya.
 
-> **Versi:** 2.3.0 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
+> **Versi:** 2.4.0 &nbsp;•&nbsp; **Platform:** Windows 10/11 64-bit &nbsp;•&nbsp;
 > **Mode:** 100% offline (tidak ada data yang dikirim ke internet) &nbsp;•&nbsp;
 > **Pembuat:** Alfin Aqila Muzaki
 
@@ -353,8 +353,30 @@ perangkat (boleh berisi subfolder bertingkat).
 
 - Kolom **DATA HASIL** menunjukkan lokasi penyimpanan hasil analisis untuk folder itu
   (dibuat otomatis, tidak perlu folder kasus atau nomor kasus).
-- Folder bukti terakhir otomatis dibuka kembali saat aplikasi dijalankan lagi.
+- Aplikasi **selalu dibuka dalam keadaan kosong** (siap untuk analisis baru).
 - Chip **OFFLINE** dan **BUKTI READ-ONLY** di header menandakan mode kerja aman.
+
+#### Kelola analisis: baru, riwayat, ubah, hapus (CRUD)
+
+Setiap folder bukti punya data analisisnya sendiri, dan data itu **tidak hilang** saat
+berganti analisis. Semua analisis dikelola dari tombol **RIWAYAT** di bar atas:
+
+| Operasi | Tombol | Fungsi |
+|---|---|---|
+| **Create** | **ANALISIS BARU** (bar atas & jendela Riwayat) | Menutup analisis yang sedang terbuka (datanya tetap tersimpan), mengosongkan tampilan, lalu meminta pilih folder bukti baru |
+| **Read** | **RIWAYAT** → **BUKA ANALISIS** / **BUKA FOLDER DATA** | Daftar semua analisis: status, nama, folder bukti, tanggal, jumlah file/segmen/paket bukti, ukuran data, catatan, dan total pemakaian disk. Double-click untuk melanjutkan analisis lama |
+| **Update** | **UBAH NAMA / CATATAN** | Memberi nama analisis (misal "Kasus penipuan online – HP Andi") dan catatan (nomor LP, pemeriksa, status). Perubahan tercatat di audit log |
+| **Update** | **ULANG DARI AWAL** (modul 01) | Memproses ulang folder bukti yang sama dari nol. Hasil sebelumnya **diarsipkan** ke `DATA_ANALISIS\_ARSIP` (status **ARSIP**), tidak dihapus |
+| **Delete** | **HAPUS TERPILIH** | Menghapus permanen satu atau beberapa analisis sekaligus (pilih dengan Ctrl/Shift) untuk mengosongkan ruang disk. Sebelum menghapus, aplikasi menampilkan ruang yang akan dikosongkan |
+| **Delete** | **HAPUS SEMUA ARSIP** | Menghapus semua analisis berstatus ARSIP sekaligus |
+
+![Riwayat analisis](dokumentasi/14_riwayat_analisis.png)
+
+> Membuka lagi folder bukti yang sama (lewat **PILIH FOLDER BUKTI** atau **RIWAYAT**) akan
+> melanjutkan analisis lamanya: file yang sudah selesai tidak diproses ulang, hanya file
+> baru/berubah. Gunakan **ULANG DARI AWAL** bila memang ingin memproses semuanya lagi.
+> **HAPUS TERPILIH** / **HAPUS SEMUA ARSIP** ikut menghapus paket bukti diamankan dan laporannya, jadi arsipkan
+> terlebih dahulu bila masih dibutuhkan. File bukti asli tidak pernah ikut terhapus.
 
 ### 8.2 Ekstraksi bukti (modul 01)
 
@@ -618,6 +640,7 @@ Semua hasil tersimpan di folder aplikasi (tombol **BUKA FOLDER DATA** atau ikon 
 
 ```
 DATA_ANALISIS/
+├── _ARSIP/                  analisis lama hasil "Ulang dari awal" (bisa dihapus dari RIWAYAT)
 └── <nama-folder-bukti>_<hash-path>/
     ├── case.db              database: daftar file, hash, segmen teks + lokasi, audit
     ├── audit_log.txt        audit log berantai hash (teks)
@@ -819,6 +842,10 @@ mempercepat OCR dan foto mirip.
 **Konflik versi library dengan tool lain (misalnya volatility3)**
 Gunakan virtual environment (Langkah 5) agar library aplikasi ini terpisah.
 
+**Menghapus satu analisis**
+
+Buka **RIWAYAT**, pilih satu atau beberapa analisis, lalu klik **HAPUS TERPILIH** (atau **HAPUS SEMUA ARSIP**). File bukti asli tidak tersentuh.
+
 **Menghapus semua data hasil analisis**
 Jalankan `hapus_semua_data.bat` (perlu konfirmasi `YES`). Folder bukti asli tidak
 tersentuh. **Arsipkan paket `bukti_diamankan` terlebih dahulu bila masih dibutuhkan.**
@@ -998,7 +1025,7 @@ hanya melihat satu angka gabungan.
 |---|---|
 | **Pembuat** | **Alfin Aqila Muzaki** |
 | **Repository resmi** | <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search> |
-| **Versi** | 2.3.0 |
+| **Versi** | 2.4.0 |
 
 Cyber Forensic Evidence Search dirancang dan dikembangkan oleh **Alfin Aqila Muzaki**.
 Identitas pembuat dan alamat repository resmi ikut tercantum di aplikasi, di setiap
@@ -1010,6 +1037,6 @@ silakan disampaikan melalui menu **Issues** di repository tersebut.
 
 ---
 
-*Cyber Forensic Evidence Search v2.3.0 — dibuat oleh Alfin Aqila Muzaki —
+*Cyber Forensic Evidence Search v2.4.0 — dibuat oleh Alfin Aqila Muzaki —
 <https://github.com/AlfinAqilaMuzaki/forensic_evidence_search>. Alat bantu forensik
 digital; hasil pengenalan otomatis wajib diverifikasi oleh pemeriksa.*

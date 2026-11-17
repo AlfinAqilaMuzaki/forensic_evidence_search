@@ -46,9 +46,9 @@ class MainWindow(QMainWindow):
         self.setWindowIcon(QIcon(str(ico)) if ico.exists() else theme.glyph_icon("shield", "#00d4ff", 32))
         self._build(str(logo) if logo.exists() else None)
         self.apply_theme(theme.current())
-        last = self.state.last_evidence()
-        if last and os.path.isdir(last):
-            self._set_evidence(last, quiet=True)
+        # Selalu mulai dalam keadaan kosong (analisis baru). Analisis lama dibuka lewat RIWAYAT.
+        self.state.evidence_changed.connect(self._refresh_bar)
+        self._refresh_bar()
 
     # ------------------------------------------------------------------ UI
     def _build(self, logo) -> None:
@@ -82,13 +82,22 @@ class MainWindow(QMainWindow):
         self.ev_edit = QLineEdit()
         self.ev_edit.setReadOnly(True)
         self.ev_edit.setPlaceholderText("Belum dipilih — folder berisi video, foto, audio, dokumen (tidak akan diubah)")
-        bl.addWidget(self.ev_edit, 3)
+        self.ev_edit.setMinimumWidth(260)
+        bl.addWidget(self.ev_edit, 4)
         b = button("PILIH FOLDER BUKTI", "folder", "Primary")
         b.clicked.connect(self.pick_evidence)
         bl.addWidget(b)
+        b_new = button("ANALISIS BARU", "refresh", "",
+                       "Tutup analisis sekarang (data tetap tersimpan) lalu pilih folder bukti baru")
+        b_new.clicked.connect(self.new_analysis)
+        bl.addWidget(b_new)
+        b_hist = button("RIWAYAT", "clock", "", "Daftar analisis sebelumnya: buka lagi, lihat data, atau hapus")
+        b_hist.clicked.connect(self.show_history)
+        bl.addWidget(b_hist)
         bl.addSpacing(12)
         bl.addWidget(label("DATA HASIL", "StatCaption"))
         self.ws_lbl = label("-", "PathLabel")
+        self.ws_lbl.setMaximumWidth(330)
         self.ws_lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
         bl.addWidget(self.ws_lbl, 2)
         b2 = button("", "open", "", "Buka folder data hasil analisis")
@@ -121,6 +130,7 @@ class MainWindow(QMainWindow):
             "audit": AuditPage(self.state),
         }
         themed(self.pages["search"])
+        self.pages["extract"].restart_requested.connect(self.restart_analysis)
         nav = (("extract", "01  EKSTRAKSI BUKTI", "scan"), ("search", "02  CARI TEKS", "search"),
                ("photo", "03  CARI FOTO MIRIP", "image"), ("inventory", "04  INVENTARIS && HASH", "fingerprint"),
                ("audit", "05  AUDIT LOG", "log"))
@@ -188,10 +198,72 @@ class MainWindow(QMainWindow):
             if not quiet:
                 QMessageBox.warning(self, "Folder bukti", err)
             return
-        self.ev_edit.setText(self.state.evidence_dir)
-        self.ws_lbl.setText(str(self.state.workspace))
-        self.sb_ws.setText(f"BUKTI: {self.state.evidence_dir}   →   DATA: {self.state.workspace}")
         self.pages["photo"].refresh_index_info()
+        self.go("extract")
+
+    def _refresh_bar(self) -> None:
+        if self.state.evidence_dir:
+            self.ev_edit.setText(self.state.evidence_dir)
+            parts = self.state.workspace.parts
+            self.ws_lbl.setText("…\\" + "\\".join(parts[-2:]))   # path pendek; lengkap di tooltip
+            self.ws_lbl.setToolTip(str(self.state.workspace))
+            self.sb_ws.setText(f"BUKTI: {self.state.evidence_dir}   →   DATA: {self.state.workspace}")
+        else:
+            self.ev_edit.clear()
+            self.ws_lbl.setText("-")
+            self.ws_lbl.setToolTip("")
+            self.sb_ws.setText("Analisis baru — pilih FOLDER BUKTI, atau buka analisis lama lewat RIWAYAT")
+
+    def new_analysis(self) -> None:
+        if self.any_busy():
+            QMessageBox.warning(self, "Sedang berjalan", "Hentikan proses yang sedang berjalan dulu.")
+            return
+        if self.state.evidence_dir:
+            self.state.clear_evidence()
+        self.go("extract")
+        self.pages["extract"].log("=== ANALISIS BARU — analisis sebelumnya tetap tersimpan (lihat RIWAYAT) ===")
+        self.pick_evidence()
+
+    def show_history(self) -> None:
+        from .ui.history import HistoryDialog
+
+        dlg = HistoryDialog(self, self.state.workspace, self.any_busy())
+        accepted = dlg.exec()
+        if accepted and dlg.want_new:
+            self.new_analysis()
+            return
+        if accepted and dlg.chosen:
+            if self.any_busy():
+                QMessageBox.warning(self, "Sedang berjalan", "Hentikan proses yang sedang berjalan dulu.")
+                return
+            self._set_evidence(dlg.chosen.evidence_dir)
+
+    def close_current_for_delete(self) -> None:
+        """Dipanggil RIWAYAT sebelum menghapus analisis yang sedang terbuka."""
+        self.state.clear_evidence()
+
+    def restart_analysis(self) -> None:
+        if not self.state.evidence_dir:
+            QMessageBox.information(self, "Ulang dari awal", "Belum ada folder bukti yang dibuka.")
+            return
+        if self.any_busy():
+            QMessageBox.warning(self, "Sedang berjalan", "Hentikan proses yang sedang berjalan dulu.")
+            return
+        msg = ("Ulang analisis folder ini DARI AWAL?\n\n" + self.state.evidence_dir + "\n\n"
+               "Hasil analisis sebelumnya (teks ekstraksi, index foto, audit log, paket bukti diamankan) "
+               "TIDAK dihapus, tapi DIARSIPKAN ke DATA_ANALISIS/_ARSIP dan masih bisa dilihat dari RIWAYAT.\n\n"
+               "Setelah ini tekan MULAI / LANJUTKAN EKSTRAKSI untuk memproses ulang semua file.")
+        if QMessageBox.question(self, "Ulang dari awal", msg) != QMessageBox.Yes:
+            return
+        try:
+            archived = self.state.restart_current()
+        except OSError as exc:
+            QMessageBox.critical(self, "Gagal", f"{exc}\n\nTutup laporan/file hasil analisis yang sedang "
+                                 "terbuka, lalu coba lagi.")
+            return
+        self.pages["photo"].refresh_index_info()
+        self.go("extract")
+        self.pages["extract"].log(f"=== ULANG DARI AWAL — data lama diarsipkan: {archived} ===")
 
     def toggle_theme(self) -> None:
         self.apply_theme("light" if theme.current() == "dark" else "dark")
